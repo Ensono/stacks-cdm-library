@@ -10,7 +10,7 @@ BeforeDiscovery {
 
     # configuration
     $configurationFile = $parentConfiguration.configurationFile
-    $checkConfiguration = Get-Content -Path $configurationFile | ConvertFrom-Yaml
+    $checkConfiguration = (Get-Content -Path $configurationFile | ConvertFrom-Yaml).($parentConfiguration.checkName)
     
     # GitHub authentication
     $secureString = ($parentConfiguration.githubToken | ConvertTo-SecureString -AsPlainText -Force)
@@ -21,15 +21,17 @@ BeforeDiscovery {
     $repositories = [System.Collections.ArrayList]@()
 
     foreach ($repositoryName in $checkConfiguration.repositories) {
-        $pullRequests = Get-GitHubPullRequest -OwnerName $checkConfiguration.owner -RepositoryName $repositoryName |
+        $dependabotPullRequests = Get-GitHubPullRequest -OwnerName $checkConfiguration.owner -RepositoryName $repositoryName |
             Where-Object {$_.state -eq 'open' -and $_.user.login -eq 'dependabot[bot]'} |
                 Select-Object -Property title, created_at
 
         $repositoryObject = [ordered] @{
             repositoryName = $repositoryName
-            dependabotPRStaleInDays = $checkConfiguration.dependabotPRStaleInDays
-            dependabotPRMaxCount = $checkConfiguration.dependabotPRMaxCount
-            pullRequests = $pullRequests
+            dependabot = @{
+                PRStaleInDays = $checkConfiguration.dependabot.PRStaleInDays
+                PRMaxCount = $checkConfiguration.dependabot.PRMaxCount
+                pullRequests = $dependabotPullRequests
+            }
         }
 
         $repository = New-Object PSObject -property $repositoryObject
@@ -42,7 +44,7 @@ BeforeDiscovery {
         repositories = $repositories
     }
 
-    $dateThreshold = $parentConfiguration.dateTime.AddDays(-$checkConfiguration.dependabotPRStaleInDays)
+    $dateThreshold = $parentConfiguration.dateTime.AddDays(-$checkConfiguration.dependabot.PRStaleInDays)
 }
 
 Describe "<_.owner> $($parentConfiguration.checkDisplayName)" -ForEach $discovery {
@@ -51,15 +53,15 @@ Describe "<_.owner> $($parentConfiguration.checkDisplayName)" -ForEach $discover
 
         BeforeAll {
             Write-Information -MessageData "`n"
-            $dateThreshold = $parentConfiguration.dateTime.AddDays(-$_.dependabotPRStaleInDays)
+            $dateThreshold = $parentConfiguration.dateTime.AddDays(-$_.dependabot.PRStaleInDays)
         }
 
-        It "Dependabot PR '<_.title>' creation date should not be older than $($dateThreshold.ToString($parentConfiguration.dateFormat))" -ForEach $_.pullRequests {
+        It "Dependabot PR '<_.title>' creation date should not be older than $($dateThreshold.ToString($parentConfiguration.dateFormat))" -ForEach $_.dependabot.pullRequests {
             $_.created_at | Should -BeGreaterThan $dateThreshold
         }
 
-        It "The number of Dependabot PRs should be less than or equal to <_.dependabotPRMaxCount>" {
-            $_.pullRequests.count | Should -BeLessOrEqual $_.dependabotPRMaxCount
+        It "The number of Dependabot PRs should be less than or equal to <_.dependabot.PRMaxCount>" {
+            $_.dependabot.pullRequests.count | Should -BeLessOrEqual $_.dependabot.PRMaxCount
         }
 
         AfterAll {

@@ -11,11 +11,11 @@ BeforeDiscovery {
     # configuration
     $configurationFile = $parentConfiguration.configurationFile
     $stageName = $parentConfiguration.stageName
-    $checkConfiguration = Get-Content -Path $configurationFile | ConvertFrom-Yaml
+    $checkConfiguration = (Get-Content -Path $configurationFile | ConvertFrom-Yaml).($parentConfiguration.checkName)
 
     # building the discovery objects
     $discovery = $checkConfiguration
-    $clusters = $discovery.stages | Where-Object {$_.name -eq $stageName} | Select-Object -ExpandProperty clusters
+    $targets = $discovery.stages | Where-Object {$_.name -eq $stageName} | Select-Object -ExpandProperty targets
 }
 
 BeforeAll {
@@ -43,7 +43,7 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
         $excludePreviewVersions = $_.excludePreviewVersions    
     }
 
-    Context "Cluster: <_.resourceGroupName>/<_.resourceName>" -ForEach $clusters {
+    Context "Target: <_.resourceGroupName>/<_.resourceName>" -ForEach $targets {
         BeforeAll {
             $resourceGroupName = $_.resourceGroupName
             $resourceName = $_.resourceName

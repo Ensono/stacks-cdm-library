@@ -10,7 +10,7 @@ BeforeDiscovery {
 
     # configuration
     $configurationFile = $parentConfiguration.configurationFile
-    $checkConfiguration = Get-Content -Path $configurationFile | ConvertFrom-Yaml
+    $checkConfiguration = (Get-Content -Path $configurationFile | ConvertFrom-Yaml).($parentConfiguration.checkName)
 
     # building the discovery objects
     $discovery = $checkConfiguration

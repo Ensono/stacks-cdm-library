@@ -11,11 +11,11 @@ BeforeDiscovery {
     # configuration
     $configurationFile = $parentConfiguration.configurationFile
     $stageName = $parentConfiguration.stageName
-    $checkConfiguration = Get-Content -Path $configurationFile | ConvertFrom-Yaml
+    $checkConfiguration = (Get-Content -Path $configurationFile | ConvertFrom-Yaml).($parentConfiguration.checkName)
     
     # building the discovery objects
     $discovery = $checkConfiguration
-    $gateways = $discovery.stages | Where-Object { $_.name -eq $stageName } | Select-Object -ExpandProperty gateways
+    $targets = $discovery.stages | Where-Object { $_.name -eq $stageName } | Select-Object -ExpandProperty targets
     
     $renewalStartDate = $parentConfiguration.dateTime.AddDays($checkConfiguration.certificateRenewalBeforeInDays)
 }
@@ -44,7 +44,7 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
         $renewalStartDate = $parentConfiguration.dateTime.AddDays($_.certificateRenewalBeforeInDays)    
     }
 
-    Context "Gateway: <_.resourceGroupName>/<_.resourceName>" -ForEach $gateways {
+    Context "Target: <_.resourceGroupName>/<_.resourceName>" -ForEach $targets {
         BeforeAll {
             $resourceGroupName = $_.resourceGroupName
             $resourceName = $_.resourceName

@@ -10,10 +10,12 @@ BeforeDiscovery {
     
     # configuration
     $configurationFile = $parentConfiguration.configurationFile
-    $checkConfiguration = Get-Content -Path $configurationFile | ConvertFrom-Yaml
+    $checkConfiguration = (Get-Content -Path $configurationFile | ConvertFrom-Yaml).($parentConfiguration.checkName)
 
     # building the discovery objects
     $discovery = $checkConfiguration
+
+    $dateThreshold = $parentConfiguration.dateTime.AddMonths($discovery.organisation.renewBeforeInMonths)
 }
 
 Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
@@ -33,6 +35,8 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
         $organisationURL = ("{0}/{1}" -f $baseURL, ("organization/{0}" -f $organisationId))
         $reportURL = ("{0}/{1}" -f $baseURL, "report")
         $financeURL = ("{0}/{1}" -f $baseURL, "finance")
+
+        $dateThreshold = $parentConfiguration.dateTime.AddMonths($_.organisation.renewBeforeInMonths)
     }
 
     Context "Organisation" {
@@ -48,16 +52,15 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
             $parameters.Add('uri', ("{0}/{1}" -f $organisationURL, "contact"))
             $response = Invoke-RestMethod @parameters
 
-            $response.organization_contact.name | Should -Be $_.organisationContact
-            $response.technical_contact.name | Should -Be $_.technicalContact
+            $response.organization_contact.name | Should -Be $_.organisation.contacts.organisation
+            $response.technical_contact.name | Should -Be $_.organisation.contacts.technical
         }
 
-        It "The organisation validation (OV) should be valid within the next <_.ordersExpiringRenewBeforeInDays> days" {
+        It "The organisation validation (OV) date should be after $($dateThreshold.ToString($parentConfiguration.dateFormat))" {
             $parameters.Add('uri', ("{0}/{1}" -f $organisationURL, "validation"))
             $response = Invoke-RestMethod @parameters
-
             ($response.validations | Where-Object {$_.type -eq "ov"}).validated_until |
-                Should -BeGreaterThan $parentConfiguration.dateTime.AddDays($_.ordersExpiringRenewBeforeInDays)
+                Should -BeGreaterThan $dateThreshold
         }
 
         AfterEach {
@@ -68,9 +71,9 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
 
     Context "Orders" {
         
-        It "There should be no expirying orders within the next <_.ordersExpiringRenewBeforeInDays> days" {
+        It "There should be no expirying orders within the next <_.orders.renewBeforeInDays> days" {
             $parameters.Add('uri', ("{0}/{1}" -f $reportURL, "order/expiring"))
-            $ordersExpiringRenewBeforeInDays = $_.ordersExpiringRenewBeforeInDays
+            $ordersExpiringRenewBeforeInDays = $_.orders.renewBeforeInDays
 
             $response = Invoke-RestMethod @parameters
 
@@ -85,7 +88,7 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
 
     Context "Finance" {
         
-        It "If there are expirying orders within 60 days, the total available funds in USD should be greater than <_.totalAvailableFundsMinInUSD> USD" {
+        It "If there are expirying orders within 60 days, the total available funds in USD should be greater than <_.finance.totalAvailableMinInUSD> USD" {
             $parameters.Add('uri', ("{0}/{1}" -f $reportURL, "order/expiring"))
 
             $response = Invoke-RestMethod @parameters
@@ -97,7 +100,7 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
 
                 $response = Invoke-RestMethod @parameters
 
-                [decimal]$response.total_available_funds | Should -BeGreaterOrEqual $_.totalAvailableFundsMinInUSD
+                [decimal]$response.total_available_funds | Should -BeGreaterOrEqual $_.finance.totalAvailableMinInUSD
             }
         }
 

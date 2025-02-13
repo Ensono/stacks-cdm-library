@@ -17,11 +17,11 @@ BeforeDiscovery {
     # configuration
     $configurationFile = $parentConfiguration.configurationFile
     $stageName = $parentConfiguration.stageName
-    $checkConfiguration = Get-Content -Path $configurationFile | ConvertFrom-Yaml
+    $checkConfiguration = (Get-Content -Path $configurationFile | ConvertFrom-Yaml).($parentConfiguration.checkName)
 
     # building the discovery objects
     $discovery = $checkConfiguration
-    $clusters = $discovery.stages | Where-Object {$_.name -eq $stageName} | Select-Object -ExpandProperty clusters
+    $targets = $discovery.stages | Where-Object {$_.name -eq $stageName} | Select-Object -ExpandProperty targets
 }
 
 BeforeAll {
@@ -35,7 +35,7 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
         $versionThreshold = $_.versionThreshold
     }
 
-    Context "Cluster: <_.resourceRegion>/<_.resourceName>" -ForEach $clusters {
+    Context "Target: <_.resourceRegion>/<_.resourceName>" -ForEach $targets {
         BeforeAll {
             $resourceName = $_.resourceName
             $resourceRegion = $_.resourceRegion

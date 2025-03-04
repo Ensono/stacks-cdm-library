@@ -1,0 +1,5 @@
+terraform:
+  runbook: 'http://www.ensono.com'
+  requiredVersionConstraints:
+    - '~> 1.0'
+    - '~> 1.9'

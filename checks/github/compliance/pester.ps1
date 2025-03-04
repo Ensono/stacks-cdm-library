@@ -48,6 +48,9 @@ BeforeDiscovery {
 }
 
 Describe "<_.owner> $($parentConfiguration.checkDisplayName)" -ForEach $discovery {
+    BeforeAll {
+        $owner = $_.owner
+    }
 
     Context "Repository: '<_.repositoryName>'" -ForEach $_.repositories {
 
@@ -65,13 +68,15 @@ Describe "<_.owner> $($parentConfiguration.checkDisplayName)" -ForEach $discover
         }
 
         AfterAll {
-            Write-Information -MessageData ("`nGitHub Pull Request link: http://github.com/{0}/{1}/pulls" -f $_.owner, $_.repositoryName)
+            Write-Information -MessageData ("`nGitHub Pull Request link: http://github.com/{0}/{1}/pulls" -f $owner, $_.repositoryName)
             Clear-Variable -Name "dateThreshold"
         }
     }
 
     AfterAll {
         Write-Information -MessageData ("`nRunbook: {0}`n" -f $_.runbook)
+
+        Clear-Variable -Name "owner"
     }
 }
 

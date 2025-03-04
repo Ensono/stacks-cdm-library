@@ -1,0 +1,13 @@
+azure/azure_kubernetes_service:
+  runbook: 'http://www.ensono.com'
+  versionThreshold: 2
+  excludePreviewVersions: true
+  stages:
+  - name: 'nonprod'
+    targets:
+    - resourceGroupName: '[RESOURCE GROUP NAME]'
+      resourceName: '[RESOURCE NAME]'
+  - name: prod
+    targets:
+    - resourceGroupName: '[RESOURCE GROUP NAME]'
+      resourceName: '[RESOURCE NAME]'

@@ -60,6 +60,7 @@ if ($skipUntilDateTime -gt $dateTime) {
         stageName = $env:STAGE_NAME
         cdmLibraryDirectory = $env:CDM_LIBRARY_DIRECTORY
         cdmChecksDirectory = $env:CDM_CHECKS_DIRECTORY
+        checkDirectory = $checkDirectory
         checkDisplayName = $env:CHECK_DISPLAY_NAME
         checkName = $env:CHECK_NAME
         checkVariantName = $env:CHECK_VARIANT_NAME

@@ -1,0 +1,8 @@
+github:
+  runbook: 'http://www.ensono.com'
+  owner: 'Ensono'
+  repositories:
+    - 'stacks-cli'
+  dependabot:
+    PRStaleInDays: 10
+    PRMaxCount: 3

@@ -1,0 +1,15 @@
+azure/azure_devops:
+  runbook: 'http://www.ensono.com'
+  organisation: '[ADO ORGANISATION NAME]'
+  baseURL: 'https://dev.azure.com'
+  projects:
+    - name: '[ADO PROJECT 1 NAME]'
+      builds:
+        - buildName: '[BUILD NAME]'
+          buildBranch: 'refs/heads/main'
+        - buildName: '[BUILD NAME]'
+          buildBranch: 'refs/heads/main'
+    - name: '[ADO PROJECT 2 NAME]'
+      builds:
+        - buildName: '[BUILD NAME]'
+          buildBranch: 'refs/heads/main'

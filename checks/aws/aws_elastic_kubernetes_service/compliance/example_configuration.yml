@@ -1,0 +1,12 @@
+aws/aws_elastic_kubernetes_service:
+  runbook: 'http://www.ensono.com'
+  versionThreshold: 2
+  stages:
+    - name: 'nonprod'
+      targets:
+        - resourceName: '[RESOURCE NAME]'
+          resourceRegion: '[RESOURCE REGION]'
+    - name: 'prod'
+      targets:
+        - resourceName: '[RESOURCE NAME]'
+          resourceRegion: '[RESOURCE REGION]'

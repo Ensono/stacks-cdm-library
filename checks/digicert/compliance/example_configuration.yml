@@ -1,0 +1,12 @@
+digicert:
+  runbook: 'http://www.ensono.com'
+  baseURL: 'https://www.digicert.com/services/v2'
+  organisation:
+    contacts:
+      organisation: '[NAME]'
+      technical: '[NAME]'
+    renewBeforeInMonths: 2
+  orders:
+    renewBeforeInDays: 30
+  finance:
+    totalAvailableMinInUSD: 1000

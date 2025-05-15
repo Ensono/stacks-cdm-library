@@ -1,0 +1,8 @@
+azure/azure_context:
+  runbook: 'http://www.ensono.com'
+  stages:
+  - name: 'nonprod'
+    subscription:
+      name: '[SUBSCRIPTION NAME]'
+      state: '[STATE]'
+      offerId: '[SUBSCRIPTION OFFER ID]'

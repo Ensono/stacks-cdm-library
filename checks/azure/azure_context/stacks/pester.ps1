@@ -58,6 +58,8 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
                 }
             }
 
+            Write-Host $parameters.headers.Authorization
+
             $queryParameters = ("api-version={0}" -f "2024-08-01")
         }
 
@@ -71,6 +73,7 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
 
         It "Offer Id should be '<_.subscription.offerId>'" {
             $parameters.Add('uri', ("{0}/{1}/{2}/{3}/?{4}" -f "https://management.azure.com", "subscriptions", $context.Subscription.Id, "providers/Microsoft.Consumption/usageDetails", $queryParameters))
+            Write-Host $parameters.uri
             (Invoke-RestMethod @parameters | Write-Output).value[0].properties.offerId | Should -Be $_.subscription.offerId
         }
 

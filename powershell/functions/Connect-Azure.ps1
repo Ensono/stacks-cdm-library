@@ -30,5 +30,5 @@ Function Connect-Azure {
     Connect-AzAccount -ServicePrincipal -TenantId $tenantId -Credential $credential -Subscription $subscriptionId
 
     $azContext = Get-AzContext
-    return Write-Information -MessageData ("`nTenantId: {0}`nSubscription Name: {1}" -f $azContext.Tenant.Id, $azContext.Subscription.Name)
+    return Write-Information -MessageData ("`nTenantId: {0}`nSubscription Name: {1}`nSubscription Id: {2}`n" -f $azContext.Tenant.Id, $azContext.Subscription.Name, $azContext.Subscription.Id)
 }

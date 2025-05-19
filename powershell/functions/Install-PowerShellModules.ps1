@@ -21,8 +21,9 @@ Function Install-PowerShellModules {
             Retry-Command -ScriptBlock {
                 Install-Module -Name $moduleName -Scope CurrentUser -PassThru -Repository PSGallery -Force
             }
-            
             Import-Module -Name $moduleName -Force
+            Write-Information -MessageData ("Module installed with version: {0}`n" -f $((Get-Module -Name $moduleName).Version.ToString()))
+            
         } else {
             Write-Information -MessageData ("Module already installed with version: {0}`n" -f $module.Version)
             Import-Module -Name $moduleName -Force

@@ -16,9 +16,7 @@ if (Test-Path -Path ("{0}/{1}/{2}" -f $parentConfiguration.cdmChecksDirectory, $
     $script:pesterFile = ("{0}/{1}/{2}/{3}/{4}" -f $parentConfiguration.cdmLibraryDirectory, $parentConfiguration.cdmChecksDirectory, $parentConfiguration.checkName, $parentConfiguration.checkVariantName, "pester.ps1")
 }
 
-if (Test-Path -Path $pesterFile) {
-    Write-Information -MessageData ("Running Pester from '{0}'" -f $pesterFile)
-} else {
+if (-not (Test-Path -Path $pesterFile)) {
     throw ("Pester file '{0}' cannot be found" -f $pesterFile)
 }
 

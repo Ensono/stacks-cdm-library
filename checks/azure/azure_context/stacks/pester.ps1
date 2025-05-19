@@ -47,9 +47,13 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
     Context "Subscription" {
         BeforeAll {
             $context = Get-AzContext
-            $accessToken = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto(
-                [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR((Get-AzAccessToken -AsSecureString -ResourceUrl "https://management.azure.com").Token)
-            )
+            # $accessToken = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto(
+            #     [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR((Get-AzAccessToken -AsSecureString -ResourceUrl "https://management.azure.com").Token)
+
+            $token = (Get-AzAccessToken -ResourceUrl "https://management.azure.com").Token
+            Write-Host $token
+            $accessToken = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($token))
+            Write-Host $accessToken
             $parameters = @{
                 "method" = "GET"
                 "headers" = @{

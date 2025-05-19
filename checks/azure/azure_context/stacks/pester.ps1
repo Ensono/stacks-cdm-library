@@ -6,7 +6,7 @@ param (
 BeforeDiscovery {
     # installing dependencies
     # to avoid a potential clash with the YamlDotNet libary always load the module 'powershell-yaml' last
-    Install-PowerShellModules -moduleNames ("powershell-yaml")
+    Install-PowerShellModules -moduleNames ("Az.Accounts", "powershell-yaml")
 
     # configuration
     $configurationFile = $parentConfiguration.configurationFile

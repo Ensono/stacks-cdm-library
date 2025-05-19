@@ -28,8 +28,13 @@ BeforeAll {
     }
 
     # Azure authentication
-    if ((Get-AzContext).Subscription.Id -ne $parentConfiguration.armSubscriptionId) {
-        Clear-AzContext -Scope CurrentUser -Force
+    $azContext = Get-AzContext
+    if ($azContext.Subscription.Id -eq $parentConfiguration.armSubscriptionId) {
+        Write-Information -MessageData ("Reusing Azure context:`n`nTenantId: {0}`nSubscription Name: {1}`nSubscription Id: {2}`n" -f $azContext.Tenant.Id, $azContext.Subscription.Name, $azContext.Subscription.Id)
+    } else {
+        Write-Information -MessageData ("New Azure context:")
+        Clear-AzContext -Force
+        
         Connect-Azure `
             -tenantId $parentConfiguration.armTenantId `
             -subscriptionId $parentConfiguration.armSubscriptionId `
@@ -47,13 +52,9 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
     Context "Subscription" {
         BeforeAll {
             $context = Get-AzContext
-            # $accessToken = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto(
-            #     [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR((Get-AzAccessToken -AsSecureString -ResourceUrl "https://management.azure.com").Token)
+            $accessToken = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto(
+                [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR((Get-AzAccessToken -ResourceUrl "https://management.azure.com" -TenantId $context.Tenant.Id).Token))
 
-            $token = (Get-AzAccessToken -ResourceUrl "https://management.azure.com").Token
-            Write-Host $token
-            $accessToken = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($token))
-            Write-Host $accessToken
             $parameters = @{
                 "method" = "GET"
                 "headers" = @{
@@ -77,7 +78,6 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
 
         It "Offer Id should be '<_.subscription.offerId>'" {
             $parameters.Add('uri', ("{0}/{1}/{2}/{3}/?{4}" -f "https://management.azure.com", "subscriptions", $context.Subscription.Id, "providers/Microsoft.Consumption/usageDetails", $queryParameters))
-            Write-Host $parameters.uri
             (Invoke-RestMethod @parameters | Write-Output).value[0].properties.offerId | Should -Be $_.subscription.offerId
         }
 
@@ -95,5 +95,5 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
 }
 
 AfterAll {
-    Clear-AzContext -Scope CurrentUser -Force
+    Clear-AzContext -Force
 }

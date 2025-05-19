@@ -52,9 +52,11 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
     Context "Subscription" {
         BeforeAll {
             $context = Get-AzContext
-            $accessToken = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto(
-                [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR((Get-AzAccessToken -ResourceUrl "https://management.azure.com" -TenantId $context.Tenant.Id).Token))
+            # $accessToken = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto(
+            #     [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR((Get-AzAccessToken -ResourceUrl "https://management.azure.com" -TenantId $context.Tenant.Id).Token))
 
+            $accessToken = (New-Object System.Management.Automation.PSCredential('user', (Get-AzAccessToken -ResourceUrl "https://management.azure.com" -TenantId $context.Tenant.Id).Token)).GetNetworkCredential().Password
+            Write-Host $accessToken.Length
             $parameters = @{
                 "method" = "GET"
                 "headers" = @{
@@ -62,8 +64,6 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
                     "Accept" = "application/json"
                 }
             }
-
-            Write-Host $parameters.headers.Authorization
 
             $queryParameters = ("api-version={0}" -f "2024-08-01")
         }

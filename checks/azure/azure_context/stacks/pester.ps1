@@ -45,18 +45,14 @@ BeforeAll {
 
 Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
 
-    BeforeAll {        
-        
-    }
+    BeforeAll {}
 
     Context "Subscription" {
         BeforeAll {
             $context = Get-AzContext
-            # $accessToken = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto(
-            #     [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR((Get-AzAccessToken -ResourceUrl "https://management.azure.com" -TenantId $context.Tenant.Id).Token))
 
-            $accessToken = (New-Object System.Management.Automation.PSCredential('user', (Get-AzAccessToken -ResourceUrl "https://management.azure.com" -TenantId $context.Tenant.Id).Token)).GetNetworkCredential().Password
-            Write-Host $accessToken.Length
+            $accessToken = (New-Object System.Management.Automation.PSCredential('user', (Get-AzAccessToken -ResourceUrl "https://management.azure.com").Token)).GetNetworkCredential().Password
+
             $parameters = @{
                 "method" = "GET"
                 "headers" = @{

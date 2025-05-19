@@ -8,6 +8,8 @@
 $InformationPreference = "Continue"
 $ErrorActionPreference = "Stop"
 
+$PSVersionTable
+
 # dot-sourcing functions
 $functions = (
    "Retry-Command.ps1",
@@ -23,7 +25,7 @@ $script:targetTimeZone = Get-TimeZone -ListAvailable | Where-Object {$_.id -eq $
 $script:dateTime = [System.TimeZoneInfo]::ConvertTime($([datetime]::ParseExact($(Get-Date -Format $env:CDM_DATE_FORMAT), $env:CDM_DATE_FORMAT, $null).ToUniversalTime()), $targetTimeZone)
 $script:skipUntilDateTime = [datetime]::ParseExact($env:SKIP_UNTIL, $env:CDM_DATE_FORMAT, $null)
 
-Write-Information -MessageData ("Date: {0} {1}`n" -f $dateTime.ToString($env:CDM_DATE_FORMAT), $targetTimeZone.DisplayName)
+Write-Information -MessageData ("`nDate: {0} {1}`n" -f $dateTime.ToString($env:CDM_DATE_FORMAT), $targetTimeZone.DisplayName)
 
 # defining runtime paths
 $script:checkDirectory = ("{0}/{1}" -f $env:CDM_CHECKS_DIRECTORY, $env:CHECK_NAME)

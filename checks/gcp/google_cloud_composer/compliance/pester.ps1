@@ -27,13 +27,13 @@ BeforeAll {
         . ("{0}/powershell/functions/{1}" -f $env:CDM_LIBRARY_DIRECTORY, $function)
     }
 
-    # Install Google Cloud CLI
-    try {
-        Install-GcloudCli
-    }
-    catch {
-        throw ("Cannot install Google Cloud CLI: {0}" -f $_.Exception.Message)
-    }
+    # # Install Google Cloud CLI
+    # try {
+    #     Install-GcloudCli
+    # }
+    # catch {
+    #     throw ("Cannot install Google Cloud CLI: {0}" -f $_.Exception.Message)
+    # }
 
     # Authenticate gcloud Cli
     $LASTEXITCODE = 0

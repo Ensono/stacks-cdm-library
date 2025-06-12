@@ -18,15 +18,6 @@ BeforeDiscovery {
 }
 
 BeforeAll {
-    # Dot-sourcing functions
-    $functions = (
-        "Install-GcloudCli.ps1"
-    )
-
-    foreach ($function in $functions) {
-        . ("{0}/powershell/functions/{1}" -f $env:CDM_LIBRARY_DIRECTORY, $function)
-    }
-
     # Authenticate gcloud Cli
     $LASTEXITCODE = 0
     gcloud auth login --cred-file $parentConfiguration.secureFilePath --no-launch-browser --quiet --force

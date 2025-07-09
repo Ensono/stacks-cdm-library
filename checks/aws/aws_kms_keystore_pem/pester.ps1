@@ -29,7 +29,7 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
 
         BeforeAll {
             # URL of the .pem file
-            $url = "https://keystore.payments-services.co.uk/cop/payuk.pem" # Hardcoded for now, but need to pass the URL as a variable in the configuration.yaml file
+            $url = $parentConfiguration.certUrl
 
             # Local path to save the downloaded .pem file
             $localFilePath = "/Users/jasondiaz/Downloads/" # Need to create a local directory in the agent and point to it
@@ -49,16 +49,16 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
 
             # Check if the certificate is valid and whether it is within the last month of validity
             if ($expDate -eq "" -or $expDate -eq $null -or $expDate -eq 0) {
-                throw("ERROR: The certificate has not been found or is invalid. The expiry date value cannot be retrieved.")
+                throw("ERROR: The ${$_.certName} has not been found or is invalid. The expiry date value cannot be retrieved.")
                 $result = 0
             } elseif ($expDate -lt $today) {
-                throw("ERROR: The certificate has expired.")
+                throw("ERROR: The ${$_.certName} has expired.")
                 $result = 0
             } elseif ($expDate -ge $today -and $expDate -le $inAMonth) {
-                throw("WARNING: The certificate needs renewing. $daysLeft days left.")
+                throw("WARNING: The ${$_.certName} needs renewing. $daysLeft days left.")
                 $result = 0
             } else {
-                throw("INFO: The certificate does not need renewing yet. $monthsLeft month(s) still left.")
+                throw("INFO: The ${$_.certName} does not need renewing yet. $monthsLeft month(s) still left.")
                 $result = 1
             }
         }

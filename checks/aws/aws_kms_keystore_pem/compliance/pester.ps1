@@ -25,14 +25,15 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
 
     }
 
-    Context "Google cloud composer" -ForEach $targets {
+    Context "Keystore certificates" -ForEach $targets {
 
         BeforeAll {
             # URL of the .pem file
-            $url = $parentConfiguration.certUrl
+            $url = $_.url
 
             # Local path to save the downloaded .pem file
-            $localFilePath = "/Users/jasondiaz/Downloads/" # Need to create a local directory in the agent and point to it
+            $localFilePath = "/home/vsts/work/_temp"
+            # $localFilePath = "./" ---- Use this when testing locally ----
 
             # Download the .pem file
             Invoke-WebRequest -Uri $url -OutFile $localFilePath
@@ -41,29 +42,33 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
             $cert = [System.Security.Cryptography.X509Certificates.X509Certificate2]::new((Convert-Path "$localFilePath/payuk.pem"))
 
             # Define dates for check
+            $startDate = $cert.NotBefore
             $expDate = $cert.NotAfter
             $today = Get-Date
             $inAMonth = (Get-Date).AddMonths(+1)
             $daysLeft = ($expDate - $today).Days
             $monthsLeft = [int]($daysLeft/30)
 
+            # Define cert name
+            $certNm = $_.certName
+
             # Check if the certificate is valid and whether it is within the last month of validity
             if ($expDate -eq "" -or $expDate -eq $null -or $expDate -eq 0) {
-                throw("ERROR: The ${$_.certName} has not been found or is invalid. The expiry date value cannot be retrieved.")
+                Write-Error "ERROR: The $certNm has not been found or is invalid. The expiry date value cannot be retrieved."
                 $result = 0
             } elseif ($expDate -lt $today) {
-                throw("ERROR: The ${$_.certName} has expired.")
+                Write-Error "ERROR: The $certNm has expired.`nStart date: $startDate`nExpiry date $expDate"
                 $result = 0
             } elseif ($expDate -ge $today -and $expDate -le $inAMonth) {
-                throw("WARNING: The ${$_.certName} needs renewing. $daysLeft days left.")
+                Write-Error "WARNING: The $certNm needs renewing. $daysLeft days left.`nStart date: $startDate`nExpiry date: $expDate"
                 $result = 0
             } else {
-                throw("INFO: The ${$_.certName} does not need renewing yet. $monthsLeft month(s) still left.")
+                Write-Information "INFO: The $certNm does not need renewing yet. $monthsLeft month(s) still left.`nStart date: $startDate`nExpiry date: $expDate"
                 $result = 1
             }
         }
 
-
+        # Set test criteria
         It "Cert is valid for over a month" {
             $result | Should -Be 1
         }

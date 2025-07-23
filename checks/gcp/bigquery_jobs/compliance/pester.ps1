@@ -89,7 +89,7 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
             $jobType = $_.jobType
 
             $failedBackupJobs = $results.jobs | Where-Object {
-                $null -ne $_.status.errorResult
+                $_.configuration.jobType -eq $jobType -and $null -ne $_.status.errorResult
             }
 
         }

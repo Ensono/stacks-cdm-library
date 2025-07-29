@@ -40,7 +40,9 @@ Function Find-ADOWorkItemsByQuery {
     
     $parameters.Add('body', $(@{query = ("{0}" -f $wiQuery) } | ConvertTo-Json))
     
-    $response = Invoke-RestMethod @parameters | Write-Output
+    $response = Invoke-RestMethod @parameters
+
+    Write-Debug -Message ($response | Format-List *)
 
     if ($response.GetType().Name -ne "PSCustomObject") {
         throw ("Expected API response object of '{0}' but got '{1}'" -f "PSCustomObject", $response.GetType().Name)

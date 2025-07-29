@@ -16,8 +16,8 @@ Function Find-ADOWorkItemsByQuery {
         [string]$baseURL,
 
         [Parameter(Mandatory = $true)]
-        [PSCustomObject]
-        $accessTokenConfig,
+        [string]
+        $accessToken,
         
         [Parameter(Mandatory = $true)]
         [string]$wiQuery
@@ -31,16 +31,8 @@ Function Find-ADOWorkItemsByQuery {
         headers = $headers
     }
 
-    # Set Authorization header based on access token configuration
-    switch ($accessTokenConfig.useServicePrincipal) {
-        $true {  
-            $parameters.headers.Add('Authorization', ("Bearer {0}" -f $accessTokenConfig.accessToken))
-        }
-
-        Default {
-            $parameters.headers.Add('Authorization', ("Basic {0}" -f $accessTokenConfig.accessToken))
-        }
-    }
+    # Set Authorization header
+    $parameters.headers.Add('Authorization', $accessToken)
 
     $queryParameters = ("api-version={0}" -f $apiVersion)
     

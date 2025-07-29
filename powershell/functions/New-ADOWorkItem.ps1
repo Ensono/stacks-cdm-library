@@ -16,8 +16,8 @@
         [string]$apiVersion = "7.1",
 
         [Parameter(Mandatory = $true)]
-        [PSCustomObject]
-        $accessTokenConfig,
+        [string]
+        $accessToken,
 
         [Parameter(Mandatory = $true)]
         [string]$wiType,
@@ -35,15 +35,7 @@
     }
 
     # Set Authorization header based on access token configuration
-    switch ($accessTokenConfig.useServicePrincipal) {
-        $true {  
-            $parameters.headers.Add('Authorization', ("Bearer {0}" -f $accessTokenConfig.accessToken))
-        }
-
-        Default {
-            $parameters.headers.Add('Authorization', ("Basic {0}" -f $accessTokenConfig.accessToken))
-        }
-    }
+    $parameters.headers.Add('Authorization', $accessToken)
     
     $queryParameters = ("api-version={0}" -f $apiVersion)
 

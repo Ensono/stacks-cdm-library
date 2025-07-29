@@ -16,21 +16,18 @@ foreach ($function in $functions) {
 
 # Check for SP or PAT authentication
 # accessTokenConfig is passed to functions making requests to ADO APIs so that headers can be set correctly based on the authentication method
-$accessTokenConfig = @{
-    useServicePrincipal = $false
-    accessToken         = ""
-}
-
 if ($parentConfiguration.azureTenantId -and $parentConfiguration.azureServicePrincipalId -and $parentConfiguration.azureServicePrincipalSecret) {
     Write-Information -MessageData "Using Azure Service Principal for authetication"
-    $accessTokenConfig.useServicePrincipal = $true
-    $accessTokenConfig.accessToken = Get-AdoAccessToken `
+
+    $azAccessToken = Get-AdoAccessToken `
         -tenantId $parentConfiguration.azureTenantId `
         -clientId $parentConfiguration.azureServicePrincipalId `
         -clientSecret $parentConfiguration.azureServicePrincipalSecret
+
+    $accessToken = "Bearer {0}" -f $azAccessToken
 } else {
     Write-Information -MessageData "Using ADO PAT for authentication"
-    $accessTokenConfig.accessToken = $parentConfiguration.accessToken
+    $accessToken = "Basic {0}" -f $parentConfiguration.accessToken
 }
 
 # // START check for existing Product Backlog Item //
@@ -49,7 +46,7 @@ $script:wiPBIQuery = (
     AND [State] <> 'Removed'" -f $wiTitle
 )
 
-$script:wiPBIs = Find-ADOWorkItemsByQuery -baseURL $parentConfiguration.baseUrl -accessTokenConfig $accessTokenConfig -wiQuery $wiPBIQuery
+$script:wiPBIs = Find-ADOWorkItemsByQuery -baseURL $parentConfiguration.baseUrl -accessToken $accessToken -wiQuery $wiPBIQuery
 # // END check for existing Product Backlog Item //
 
 if ($wiPBIs.workItems.Count -eq 0) {
@@ -84,7 +81,7 @@ if ($wiPBIs.workItems.Count -eq 0) {
             )" -f $parentMappings.($parentConfiguration.checkName), $parentConfiguration.clientName
     )
 
-    $script:wiParent = (Find-ADOWorkItemsByQuery -baseURL $parentConfiguration.baseUrl -accessTokenConfig $accessTokenConfig -wiQuery $wiParentQuery).workItemRelations.source
+    $script:wiParent = (Find-ADOWorkItemsByQuery -baseURL $parentConfiguration.baseUrl -accessToken $accessToken -wiQuery $wiParentQuery).workItemRelations.source
     # // STOP discover work item parent //
 
     # // START creating new PBI //
@@ -145,7 +142,7 @@ if ($wiPBIs.workItems.Count -eq 0) {
         }
     )
 
-    $script:newWI = New-ADOWorkItem -baseURL $parentConfiguration.baseUrl -accessTokenConfig $accessTokenConfig -wiType "Product Backlog Item" -payload $payload
+    $script:newWI = New-ADOWorkItem -baseURL $parentConfiguration.baseUrl -accessToken $accessToken -wiType "Product Backlog Item" -payload $payload
 
     Write-Information -MessageData ("Work item id '{0}' linked to parent '{1}' with id '{2}'" -f $newWI.id, $parentConfiguration.clientName, $wiParent.id)
     Write-Information -MessageData ("Work item link '{0}/_workitems/edit/{1}'" -f $parentConfiguration.baseUrl, $newWI.id)

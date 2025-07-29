@@ -5,12 +5,32 @@
 
 # # dot-sourcing functions
 $functions = (
-   "Find-ADOWorkItemsByQuery.ps1",
-   "New-ADOWorkItem.ps1" 
+    "Find-ADOWorkItemsByQuery.ps1",
+    "New-ADOWorkItem.ps1",
+    "Get-AdoAccessToken.ps1"
 )
 
 foreach ($function in $functions) {
     . ("{0}/powershell/functions/{1}" -f $env:CDM_LIBRARY_DIRECTORY, $function)
+}
+
+# Check for SP or PAT authentication
+# accessTokenConfig is passed to functions making requests to ADO APIs so that headers can be set correctly based on the authentication method
+$accessTokenConfig = @{
+    useServicePrincipal = $false
+    accessToken         = ""
+}
+
+if ($parentConfiguration.azureTenantId -and $parentConfiguration.azureServicePrincipalId -and $parentConfiguration.azureServicePrincipalSecret) {
+    Write-Information -MessageData "Using Azure Service Principal for authetication"
+    $accessTokenConfig.useServicePrincipal = $true
+    $accessTokenConfig.accessToken = Get-AdoAccessToken `
+        -tenantId $parentConfiguration.azureTenantId `
+        -clientId $parentConfiguration.azureServicePrincipalId `
+        -clientSecret $parentConfiguration.azureServicePrincipalSecret
+} else {
+    Write-Information -MessageData "Using ADO PAT for authentication"
+    $accessTokenConfig.accessToken = $parentConfiguration.accessToken
 }
 
 # // START check for existing Product Backlog Item //
@@ -29,7 +49,7 @@ $script:wiPBIQuery = (
     AND [State] <> 'Removed'" -f $wiTitle
 )
 
-$script:wiPBIs = Find-ADOWorkItemsByQuery -baseURL $parentConfiguration.baseUrl -accessToken $parentConfiguration.accessToken -wiQuery $wiPBIQuery
+$script:wiPBIs = Find-ADOWorkItemsByQuery -baseURL $parentConfiguration.baseUrl -accessTokenConfig $accessTokenConfig -wiQuery $wiPBIQuery
 # // END check for existing Product Backlog Item //
 
 if ($wiPBIs.workItems.Count -eq 0) {
@@ -41,7 +61,7 @@ if ($wiPBIs.workItems.Count -eq 0) {
 
     $script:parentMappings = (Get-Content -Path $parentConfiguration.configurationFile |
         ConvertFrom-Yaml).($parentConfiguration.action).parentMappings |
-            Where-Object {$_.clientName -eq $parentConfiguration.clientName}
+    Where-Object { $_.clientName -eq $parentConfiguration.clientName }
 
     if ($null -eq $parentMappings.($parentConfiguration.checkName)) {
         throw ("Missing the '{0}' parentMappings configuration for the client '{1}' and check '{2}'" -f $parentConfiguration.action, $parentConfiguration.clientName, $parentConfiguration.checkName)
@@ -64,7 +84,7 @@ if ($wiPBIs.workItems.Count -eq 0) {
             )" -f $parentMappings.($parentConfiguration.checkName), $parentConfiguration.clientName
     )
 
-    $script:wiParent = (Find-ADOWorkItemsByQuery -baseURL $parentConfiguration.baseUrl -accessToken $parentConfiguration.accessToken -wiQuery $wiParentQuery).workItemRelations.source
+    $script:wiParent = (Find-ADOWorkItemsByQuery -baseURL $parentConfiguration.baseUrl -accessTokenConfig $accessTokenConfig -wiQuery $wiParentQuery).workItemRelations.source
     # // STOP discover work item parent //
 
     # // START creating new PBI //
@@ -74,15 +94,15 @@ if ($wiPBIs.workItems.Count -eq 0) {
 
     $payload = @(
         @{
-            op = "add"
-            path = "/fields/System.Title"
-            from = $null
+            op    = "add"
+            path  = "/fields/System.Title"
+            from  = $null
             value = ("{0}" -f $wiTitle)
         }
         @{
-            op = "add"
-            path = "/fields/System.Description"
-            from = $null
+            op    = "add"
+            path  = "/fields/System.Description"
+            from  = $null
             value = ("{0}" -f $wiDescription)
         }
         @{
@@ -91,33 +111,33 @@ if ($wiPBIs.workItems.Count -eq 0) {
             "value" = "Refinement"
         }
         @{
-            op = "add"
-            path = "/fields/Custom.ValuetoBusiness"
-            from = $null
+            op    = "add"
+            path  = "/fields/Custom.ValuetoBusiness"
+            from  = $null
             value = ("{0}" -f "4. 5 = Some benefit to one team")
         }
         @{
-            op = "add"
-            path = "/fields/Custom.RiskReduction"
-            from = $null
+            op    = "add"
+            path  = "/fields/Custom.RiskReduction"
+            from  = $null
             value = ("{0}" -f "2. 20 = Major risk to security/vulnerability")
         }
         @{
-            op = "add"
-            path = "/fields/Custom.JobSize"
-            from = $null
+            op    = "add"
+            path  = "/fields/Custom.JobSize"
+            from  = $null
             value = ("{0}" -f "5. 8 = 3 Days")
         }
         @{
-            op = "add"
-            path = "/fields/Custom.TimeCritical"
-            from = $null
+            op    = "add"
+            path  = "/fields/Custom.TimeCritical"
+            from  = $null
             value = ("{0}" -f "5. 8 = 1 Month")
         }
         @{
-            op = "add"
-            path = "/relations/-"
-            from = $null
+            op    = "add"
+            path  = "/relations/-"
+            from  = $null
             value = @{
                 rel = "System.LinkTypes.Hierarchy-Reverse"
                 url = ("{0}" -f $wiParent.url)
@@ -125,13 +145,14 @@ if ($wiPBIs.workItems.Count -eq 0) {
         }
     )
 
-    $script:newWI = New-ADOWorkItem -baseURL $parentConfiguration.baseUrl -accessToken $parentConfiguration.accessToken -wiType "Product Backlog Item" -payload $payload
+    $script:newWI = New-ADOWorkItem -baseURL $parentConfiguration.baseUrl -accessTokenConfig $accessTokenConfig -wiType "Product Backlog Item" -payload $payload
 
     Write-Information -MessageData ("Work item id '{0}' linked to parent '{1}' with id '{2}'" -f $newWI.id, $parentConfiguration.clientName, $wiParent.id)
     Write-Information -MessageData ("Work item link '{0}/_workitems/edit/{1}'" -f $parentConfiguration.baseUrl, $newWI.id)
 
     # // STOP creating new PBI //
-} else {
+}
+else {
     Write-Warning ("Work item with title '{0}' already exists and is not closed or removed" -f $wiTitle)
     Write-Warning ("Please consider skipping this check by updating the pipeline environment variable '{0}' in the file: {1}/{2}/{3}" -f "skip_until", $env:CDM_CHECKS_DIRECTORY, $parentConfiguration.checkName , "pipeline-variables.yml")
 

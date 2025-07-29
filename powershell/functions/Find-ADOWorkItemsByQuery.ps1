@@ -3,22 +3,23 @@ Function Find-ADOWorkItemsByQuery {
     [CmdletBinding()]
     param (
 
-        [Parameter(Mandatory=$false)]
-        [hashtable]$headers = @{"content-type" = "application/json"},
+        [Parameter(Mandatory = $false)]
+        [hashtable]$headers = @{"content-type" = "application/json" },
         
-        [Parameter(Mandatory=$false)]
+        [Parameter(Mandatory = $false)]
         [string]$apiVersion = "7.1",
 
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [ValidateScript({            
-            If ([uri]::IsWellFormedUriString($_,[urikind]::Absolute)) {return $true}
-        })]
+                If ([uri]::IsWellFormedUriString($_, [urikind]::Absolute)) { return $true }
+            })]
         [string]$baseURL,
 
-        [Parameter(Mandatory=$true)]
-        [string]$accessToken,
+        [Parameter(Mandatory = $true)]
+        [PSCustomObject]
+        $accessTokenConfig,
         
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [string]$wiQuery
     )
 
@@ -26,15 +27,26 @@ Function Find-ADOWorkItemsByQuery {
     $ErrorActionPreference = "Stop"
 
     $parameters = @{
-        method = "POST"
+        method  = "POST"
         headers = $headers
+    }
+
+    # Set Authorization header based on access token configuration
+    switch ($accessTokenConfig.useServicePrincipal) {
+        $true {  
+            $parameters.headers.Add('Authorization', ("Bearer {0}" -f $accessTokenConfig.accessToken))
+        }
+
+        Default {
+            $parameters.headers.Add('Authorization', ("Basic {0}" -f $accessTokenConfig.accessToken))
+        }
     }
 
     $queryParameters = ("api-version={0}" -f $apiVersion)
     
     $parameters.Add('uri', ("{0}/_apis/{1}?{2}" -f $baseURL, "wit/wiql", $queryParameters))
-    $parameters.headers.Add('Authorization', ("Basic {0}" -f $accessToken))
-    $parameters.Add('body', $(@{query = ("{0}" -f $wiQuery)} | ConvertTo-Json))
+    
+    $parameters.Add('body', $(@{query = ("{0}" -f $wiQuery) } | ConvertTo-Json))
     
     $response = Invoke-RestMethod @parameters | Write-Output
 

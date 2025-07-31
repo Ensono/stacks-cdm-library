@@ -123,7 +123,7 @@ if ($wiPBIs.workItems.Count -eq 0) {
             op    = "add"
             path  = "/fields/Custom.JobSize"
             from  = $null
-            value = ("{0}" -f "5. 8 = 3 Days")
+            value = ("{0}" -f "4. 3 Points")
         }
         @{
             op    = "add"

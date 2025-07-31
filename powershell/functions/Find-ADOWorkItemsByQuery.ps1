@@ -42,7 +42,7 @@ Function Find-ADOWorkItemsByQuery {
     
     $response = Invoke-RestMethod @parameters
 
-    Write-Debug -Message ($response | Format-List *)
+    Write-Debug -Message ("Received response: {0}" -f ($response | ConvertTo-Json -Depth 10))
 
     if ($response.GetType().Name -ne "PSCustomObject") {
         throw ("Expected API response object of '{0}' but got '{1}'" -f "PSCustomObject", $response.GetType().Name)

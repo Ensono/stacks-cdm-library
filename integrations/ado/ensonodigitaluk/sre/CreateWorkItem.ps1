@@ -16,7 +16,11 @@ foreach ($function in $functions) {
 
 # Check for SP or PAT authentication
 # accessTokenConfig is passed to functions making requests to ADO APIs so that headers can be set correctly based on the authentication method
-if (($parentConfiguration.azureTenantId -ne "") -and ($parentConfiguration.azureServicePrincipalId -ne "") -and ($parentConfiguration.azureServicePrincipalSecret -ne "")) {
+if (
+    -not [string]::IsNullOrWhiteSpace($parentConfiguration.azureTenantId) -and 
+    -not [string]::IsNullOrWhiteSpace($parentConfiguration.azureServicePrincipalId) -and 
+    -not [string]::IsNullOrWhiteSpace($parentConfiguration.azureServicePrincipalSecret)
+) {
     Write-Information -MessageData "Using Azure Service Principal for authetication"
 
     $azAccessToken = Get-AdoAccessToken `

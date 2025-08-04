@@ -21,11 +21,7 @@ Write-Output "DEBUG:  Ado_tenant_id: $($parentConfiguration.azureTenantId)"
 Write-Output "DEBUG:  Ado_service_principal_id: $($parentConfiguration.azureServicePrincipalId)"
 Write-Output "DEBUG:  Ado_service_principal_secret: $($parentConfiguration.azureServicePrincipalSecret)"
 
-if (
-    -not [string]::IsNullOrWhiteSpace($parentConfiguration.azureTenantId) -and 
-    -not [string]::IsNullOrWhiteSpace($parentConfiguration.azureServicePrincipalId) -and 
-    -not [string]::IsNullOrWhiteSpace($parentConfiguration.azureServicePrincipalSecret)
-) {
+if ( $env:ADO_TENANT_ID -and $env:ADO_SERVICE_PRINCIPAL_ID -and $env:ADO_SERVICE_PRINCIPAL_SECRET ) {
     Write-Information -MessageData "Using Azure Service Principal for authetication"
 
     $azAccessToken = Get-AdoAccessToken `

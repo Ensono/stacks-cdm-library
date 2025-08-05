@@ -16,7 +16,6 @@ Function Get-AdoAccessToken {
     )
 
     $InformationPreference = "Continue"
-    $ErrorActionPreference = "Stop"
     
     # Build request body
     $body = @{
@@ -37,10 +36,6 @@ Function Get-AdoAccessToken {
 
     # Make request for access token
     $tokenResponse = Invoke-RestMethod @reqConfig
-
-    if ($null -eq $tokenResponse.access_token) {
-        throw "Failed to retrieve access token. Response: $($tokenResponse | ConvertTo-Json)"
-    }
 
     return $tokenResponse.access_token
 }

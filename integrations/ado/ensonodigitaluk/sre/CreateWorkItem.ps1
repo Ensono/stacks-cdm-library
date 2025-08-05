@@ -16,22 +16,21 @@ foreach ($function in $functions) {
 
 # Check for SP or PAT authentication
 # accessTokenConfig is passed to functions making requests to ADO APIs so that headers can be set correctly based on the authentication method
-
-Write-Output "DEBUG:  Ado_tenant_id: $env:ADO_TENANT_ID"
-Write-Output "DEBUG:  Ado_service_principal_id: $env:ADO_SERVICE_PRINCIPAL_ID"
-Write-Output "DEBUG:  Ado_service_principal_secret: $env:ADO_SERVICE_PRINCIPAL_SECRET"
-
-if ( $env:ADO_TENANT_ID -and $env:ADO_SERVICE_PRINCIPAL_ID -and $env:ADO_SERVICE_PRINCIPAL_SECRET ) {
-    Write-Information -MessageData "Using Azure Service Principal for authetication"
+try {
+    Write-Information -MessageData "Attempting Service Principal authentication"
 
     $azAccessToken = Get-AdoAccessToken `
         -tenantId $parentConfiguration.azureTenantId `
         -clientId $parentConfiguration.azureServicePrincipalId `
         -clientSecret $parentConfiguration.azureServicePrincipalSecret
 
+    Write-Information -MessageData "Service Principal authentication successful"
     $accessToken = "Bearer {0}" -f $azAccessToken
-} else {
-    Write-Information -MessageData "Using ADO PAT for authentication"
+}
+catch {
+    Write-Output ("ERROR: Failed to retrieve access token with Service Principal:`n {0}`n" -f $_.Exception)
+    Write-Output "Falling back to PAT authentication"
+
     $accessToken = "Basic {0}" -f $parentConfiguration.accessToken
 }
 

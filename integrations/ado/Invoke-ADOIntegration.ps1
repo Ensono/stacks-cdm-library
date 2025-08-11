@@ -46,7 +46,7 @@ if (Test-Path -Path $configurationFile) {
 $parentConfiguration = @{
     checkName = $env:CHECK_NAME
     configurationFile = $configurationFile
-    baseUrl = ("{0}/{1}/{2}" -f "https://dev.azure.com", $env:ADO_ORGANISATION_NAME, $env:ADO_PROJECT_NAME)
+    baseUrl = baseUrl = ("{0}/{1}/{2}" -f "https://dev.azure.com", [uri]::EscapeDataString("$env:ADO_ORGANISATION_NAME"), [uri]::EscapeDataString("$env:ADO_PROJECT_NAME"))
     clientName = $env:CLIENT_NAME
     azureTenantId = $env:ADO_TENANT_ID
     azureServicePrincipalId = $env:ADO_SERVICE_PRINCIPAL_ID

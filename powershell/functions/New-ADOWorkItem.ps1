@@ -45,6 +45,8 @@
 
     # TEMPORARY TROUBLESHOOTING CODE
     Write-Host $parameters
+
+    Write-Output $response | Format-List *
     
     $response = Invoke-RestMethod @parameters | Write-Output
 

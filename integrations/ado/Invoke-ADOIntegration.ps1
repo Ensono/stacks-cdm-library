@@ -57,7 +57,7 @@ $parentConfiguration = @{
     checkDisplayName = $env:CHECK_DISPLAY_NAME
     jobId = $env:JOB_ID
     systemCollectionUri = ("{0}" -f $env:ADO_SYSTEM_COLLECTION_URI)
-    systemProjectName = $env:ADO_SYSTEM_PROJECT_NAME
+    systemProjectName = [uri]::EscapeDataString("$env:ADO_SYSTEM_PROJECT_NAME")
     buildId = $env:ADO_BUILD_ID
     buildNumber = $env:ADO_BUILD_NUMBER
 }

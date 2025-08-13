@@ -42,13 +42,8 @@
     $parameters.Add('uri', ("{0}/_apis/{1}?{2}" -f $baseURL, [URI]::EscapeUriString(("wit/workitems/`${0}" -f $wiType)), $queryParameters))
 
     $parameters.Add('body', $($payload | ConvertTo-Json))
-
-    # TEMPORARY TROUBLESHOOTING CODE
-    Write-Host $parameters
     
     $response = Invoke-RestMethod @parameters | Write-Output
-
-    Write-Output $response | Format-List *
 
     if ($response.GetType().Name -ne "PSCustomObject") {
         throw ("Expected API response object of '{0}' but got '{1}'" -f "PSCustomObject", $response.GetType().Name)

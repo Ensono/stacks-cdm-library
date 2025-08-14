@@ -58,6 +58,7 @@ $parentConfiguration = @{
     jobId = $env:JOB_ID
     systemCollectionUri = ("{0}" -f $env:ADO_SYSTEM_COLLECTION_URI)
     systemProjectName = [uri]::EscapeDataString("$env:ADO_SYSTEM_PROJECT_NAME")
+    stateField = $env:ADO_STATE_FIELD
     buildId = $env:ADO_BUILD_ID
     buildNumber = $env:ADO_BUILD_NUMBER
 }

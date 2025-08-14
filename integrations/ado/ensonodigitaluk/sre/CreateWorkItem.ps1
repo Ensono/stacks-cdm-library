@@ -85,11 +85,6 @@ if ($wiPBIs.workItems.Count -eq 0) {
             )" -f $parentMappings.($parentConfiguration.checkName), $parentConfiguration.clientName
     )
 
-    # TEMPORARY TROUBLESHOOTING CODE
-    Write-Host "Parent: $script:wiParent"
-    Write-Host "baseURL: $parentConfiguration.baseUrl"
-    Write-Host "baseURL: $parentConfiguration.baseUrl"
-
     $script:wiParent = (Find-ADOWorkItemsByQuery -baseURL $parentConfiguration.baseUrl -accessToken $accessToken -wiQuery $wiParentQuery).workItemRelations.source
     # // STOP discover work item parent //
 

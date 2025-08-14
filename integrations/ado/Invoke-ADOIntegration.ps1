@@ -20,7 +20,7 @@ foreach ($function in $functions) {
 }
 
 
-$script:adoDirectory = ("{0}/{1}/{2}/{3}" -f $env:CDM_INTEGRATIONS_DIRECTORY, "ado", $env:ADO_ORGANISATION_NAME, $env:ADO_PROJECT_NAME)
+$script:adoDirectory = ("{0}/{1}" -f $env:CDM_INTEGRATIONS_DIRECTORY, "ado/ensonodigitaluk/sre")
 
 if (Test-Path -Path ("{0}/{1}.ps1" -f $adoDirectory, $env:ADO_ACTION)) {
     $script:adoActionFile = ("{0}/{1}.ps1" -f $adoDirectory, $env:ADO_ACTION)
@@ -46,7 +46,7 @@ if (Test-Path -Path $configurationFile) {
 $parentConfiguration = @{
     checkName = $env:CHECK_NAME
     configurationFile = $configurationFile
-    baseUrl = ("{0}/{1}/{2}" -f "https://dev.azure.com", $env:ADO_ORGANISATION_NAME, $env:ADO_PROJECT_NAME)
+    baseUrl = ("{0}/{1}/{2}" -f "https://dev.azure.com", [uri]::EscapeDataString("$env:ADO_ORGANISATION_NAME"), [uri]::EscapeDataString("$env:ADO_PROJECT_NAME"))
     clientName = $env:CLIENT_NAME
     azureTenantId = $env:ADO_TENANT_ID
     azureServicePrincipalId = $env:ADO_SERVICE_PRINCIPAL_ID
@@ -57,7 +57,8 @@ $parentConfiguration = @{
     checkDisplayName = $env:CHECK_DISPLAY_NAME
     jobId = $env:JOB_ID
     systemCollectionUri = ("{0}" -f $env:ADO_SYSTEM_COLLECTION_URI)
-    systemProjectName = $env:ADO_SYSTEM_PROJECT_NAME
+    systemProjectName = [uri]::EscapeDataString("$env:ADO_SYSTEM_PROJECT_NAME")
+    stateField = $env:ADO_STATE_FIELD
     buildId = $env:ADO_BUILD_ID
     buildNumber = $env:ADO_BUILD_NUMBER
 }

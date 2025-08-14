@@ -109,7 +109,7 @@ if ($wiPBIs.workItems.Count -eq 0) {
         @{
             "op"    = "add"
             "path"  = "/fields/System.State"
-            "value" = "Refinement"
+            "value" = ("{0}" -f $parentConfiguration.stateField)
         }
         @{
             op    = "add"

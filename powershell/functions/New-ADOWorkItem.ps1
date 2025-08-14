@@ -39,7 +39,7 @@
     
     $queryParameters = ("api-version={0}" -f $apiVersion)
 
-    $parameters.Add('uri', [URI]::EscapeUriString(("{0}/_apis/{1}?{2}" -f $baseURL, ("wit/workitems/`${0}" -f $wiType), $queryParameters)))
+    $parameters.Add('uri', ("{0}/_apis/{1}?{2}" -f $baseURL, [URI]::EscapeUriString(("wit/workitems/`${0}" -f $wiType)), $queryParameters))
 
     $parameters.Add('body', $($payload | ConvertTo-Json))
     

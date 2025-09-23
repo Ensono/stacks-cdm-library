@@ -26,17 +26,17 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
     Context "Keystore certificates" -ForEach $targets {
 
         BeforeAll {
-            # Local path to save the downloaded .pem file
+            # Local path to save the downloaded file
             $localFilePath = "/home/vsts/work/_temp"
             # $localFilePath = "./" ---- Use this when testing locally ----
 
             # Set the service - Transfer to targets in CDM pipeline configuration
             $service_name = $_.serviceName
 
-            # Download the .pem file
-            aws secretsmanager get-secret-value --secret-id entrust-client-certificate-$service_name | jq -r ".SecretString" > $localFilePath/payuk.pem
+            # Download the cert file
+            aws secretsmanager get-secret-value --region eu-west-2 --secret-id entrust-client-certificate-$service_name | jq -r ".SecretString" > $localFilePath/payuk.pem
 
-            # Load the certificate from the .pem file
+            # Load the certificate from the cert file
             $cert = [System.Security.Cryptography.X509Certificates.X509Certificate2]::new((Convert-Path "$localFilePath/payuk.pem"))
 
             # Define dates for check

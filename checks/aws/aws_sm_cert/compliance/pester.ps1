@@ -5,8 +5,8 @@ param (
 
 BeforeDiscovery {
     # Installing dependencies
-
-    Install-PowerShellModules -moduleNames ("powershell-yaml")
+    Install-PowerShellModules -moduleNames ("powershell-yaml", "AWS.Tools.Installer", "AWS.Tools.SecretsManager") 
+    sudo apt install jq
 
     $configurationFile = $parentConfiguration.configurationFile
     $stageName = $parentConfiguration.stageName
@@ -26,15 +26,15 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
     Context "Keystore certificates" -ForEach $targets {
 
         BeforeAll {
-            # URL of the .pem file
-            $url = $_.url
-
             # Local path to save the downloaded .pem file
             $localFilePath = "/home/vsts/work/_temp"
             # $localFilePath = "./" ---- Use this when testing locally ----
 
+            # Set the service - Transfer to targets in CDM pipeline configuration
+            $service_name = $_.serviceName
+
             # Download the .pem file
-            Invoke-WebRequest -Uri $url -OutFile $localFilePath
+            aws secretsmanager get-secret-value --secret-id entrust-client-certificate-$service_name | jq -r ".SecretString" > $localFilePath/payuk.pem
 
             # Load the certificate from the .pem file
             $cert = [System.Security.Cryptography.X509Certificates.X509Certificate2]::new((Convert-Path "$localFilePath/payuk.pem"))

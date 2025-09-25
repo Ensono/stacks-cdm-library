@@ -25,8 +25,8 @@ BeforeDiscovery {
 }
 
 BeforeAll {
-    # AWS authentication
-    Set-AWSCredential -AccessKey $parentConfiguration.awsAccessKeyId -SecretKey $parentConfiguration.awsSecretAccessKey 
+    # AWS authentication (This is only necessary if authentication has not been hadled by the pipeline)
+    # Set-AWSCredential -AccessKey $parentConfiguration.awsAccessKeyId -SecretKey $parentConfiguration.awsSecretAccessKey 
 }
 
 Describe $parentConfiguration.checkDisplayName -ForEach $discovery {

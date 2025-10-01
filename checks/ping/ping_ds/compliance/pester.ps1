@@ -19,7 +19,7 @@ BeforeDiscovery {
 
 BeforeAll {
     # Read the latest version from the latest_versions file
-    $latestVersionsFile = Join-Path $PSScriptRoot ".." "latest_versions"
+    $latestVersionsFile = Join-Path $PSScriptRoot "../.." "latest_versions"
 
     if (Test-Path $latestVersionsFile) {
         $latestVersionsContent = Get-Content $latestVersionsFile

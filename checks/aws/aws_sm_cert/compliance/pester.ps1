@@ -30,11 +30,16 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
             $localFilePath = "/home/vsts/work/_temp"
             # $localFilePath = "./" ---- Use this when testing locally ----
 
-            # Set the service - Transfer to targets in CDM pipeline configuration
-            $service_name = $_.serviceName
+            # Set the configuration values for each target
+            $secretId = $_.secretId
+            $resourceRegion = $_.resourceRegion
 
             # Download the cert file
-            aws secretsmanager get-secret-value --region eu-west-2 --secret-id entrust-client-certificate-$service_name | jq -r ".SecretString" > $localFilePath/payuk.pem
+            aws secretsmanager get-secret-value --region $resourceRegion --secret-id $secretId | jq -r ".SecretString" > $localFilePath/payuk.pem
+            if ($LASTEXITCODE -ne 0) {
+                Write-Error "ERROR: Failed to download the secret from AWS Secrets Manager. Please check the secret ID and region, and make sure the AWS Secrets Manager file is available."
+                exit 1
+            }
 
             # Load the certificate from the cert file
             $cert = [System.Security.Cryptography.X509Certificates.X509Certificate2]::new((Convert-Path "$localFilePath/payuk.pem"))
@@ -69,6 +74,11 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
         # Set test criteria
         It "Cert is valid for over a month" {
             $result | Should -Be 1
+        }
+
+        AfterAll {
+            # Clean up the downloaded file
+            Remove-Item -Path "$localFilePath/payuk.pem" -ErrorAction SilentlyContinue
         }
     }
 }

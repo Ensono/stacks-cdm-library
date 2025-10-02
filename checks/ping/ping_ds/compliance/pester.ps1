@@ -15,8 +15,8 @@ BeforeDiscovery {
     Install-PowerShellModules -moduleNames ("powershell-yaml")
 
     # install kubectl
-    $kctlInstallOutput = Invoke-Expression "sudo apt-get update && sudo apt-get install -y kubectl" 2>&1 # MIGHT NOT BE NEEDED
-    Write-Host "Kubectl install output: $kctlInstallOutput" # Log the output for debugging REMOVE LINE
+    $kubectlInstallOutput = Invoke-Expression "sudo apt-get update && sudo apt-get install -y kubectl" 2>&1
+    Write-Host "Kubectl install output: $kubectlInstallOutput"
 
     # configuration
     $configurationFile = $parentConfiguration.configurationFile
@@ -64,9 +64,6 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
                 $kubeConfOutput = Invoke-Expression $eksKubecnfCommand 2>&1
                 # Execute the kubectl command and capture output
                 $output = Invoke-Expression $kubectlCommand 2>&1
-                Write-Host "Kubectl output: $output" # Log the output for debugging REMOVE LINE
-                Write-Host "Namespace: $namespace" # Log the namespace for debugging REMOVE LINE
-                Write-Host "Latest version: $latestVersion" # Log the latest version for debugging REMOVE LINE
                 
                 # Convert output to string if it's not already
                 $outputString = $output | Out-String

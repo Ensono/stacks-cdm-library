@@ -50,6 +50,9 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
             try {
                 # Execute the kubectl command and capture output
                 $output = Invoke-Expression $kubectlCommand 2>&1
+                Write-Host "Kubectl output: $output"
+                Write-Host "Namespace: $namespace"
+                Write-Host "Latest version: $latestVersion"
                 
                 # Convert output to string if it's not already
                 $outputString = $output | Out-String

@@ -53,10 +53,12 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
         $versionThreshold = $_.versionThreshold
     }
 
-    Context "Target: <_.resourceRegion>/<_.resourceName>" -ForEach $targets {
+    Context "Target: <_.namespace>/<_.resourceRegion>/<_.resourceName>" -ForEach $targets {
         BeforeAll {
+            $resourceName = $_.resourceName
+            $resourceRegion = $_.resourceRegion
             $namespace = $_.namespace
-            $eksKubecnfCommand = "aws eks update-kubeconfig --name payuk-infra-nonprod-ew2-infra --region eu-west-2" # ADD VARIABLES
+            $eksKubecnfCommand = "aws eks update-kubeconfig --name $resourceName --region $resourceRegion"
             $kubectlCommand = "kubectl exec -it ds-cts-0 -n $namespace -c ds -- /opt/opendj/bin/status -V"
 
             try {
@@ -117,7 +119,7 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
         }
 
        # Set test criteria
-        It "PingDS is in the target version threshold" {
+        It "PingDS is outside the target version threshold" {
             $needsUpgrade | Should -Be $false
         }
     }

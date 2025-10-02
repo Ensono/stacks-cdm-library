@@ -5,8 +5,18 @@ param (
 
 BeforeDiscovery {
     # installing dependencies
+    Install-PowerShellModules -moduleNames ("AWS.Tools.Installer")
+    
+    Install-AWSToolsModule AWS.Tools.Common, AWS.Tools.EKS -Force
+    Import-Module -Name "AWS.Tools.Common" -Force
+    Import-Module -Name "AWS.Tools.EKS" -Force
+    
+    # to avoid a potential clash with the YamlDotNet libary always load the module 'powershell-yaml' last
     Install-PowerShellModules -moduleNames ("powershell-yaml")
-    sudo apt-get update && sudo apt-get install -y kubectl
+
+    # install kubectl
+    $kctlInstallOutput = Invoke-Expression "sudo apt-get update && sudo apt-get install -y kubectl" 2>&1 # MIGHT NOT BE NEEDED
+    Write-Host "Kubectl install output: $kctlInstallOutput" # Log the output for debugging REMOVE LINE
 
     # configuration
     $configurationFile = $parentConfiguration.configurationFile
@@ -46,9 +56,12 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
     Context "Target: <_.resourceRegion>/<_.resourceName>" -ForEach $targets {
         BeforeAll {
             $namespace = $_.namespace
+            $eksKubecnfCommand = "aws eks update-kubeconfig --name payuk-infra-nonprod-ew2-infra --region eu-west-2" # ADD VARIABLES
             $kubectlCommand = "kubectl exec -it ds-cts-0 -n $namespace -c ds -- /opt/opendj/bin/status -V"
 
             try {
+                # Update kubeconfig
+                $kubeConfOutput = Invoke-Expression $eksKubecnfCommand 2>&1
                 # Execute the kubectl command and capture output
                 $output = Invoke-Expression $kubectlCommand 2>&1
                 Write-Host "Kubectl output: $output" # Log the output for debugging REMOVE LINE

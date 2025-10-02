@@ -6,6 +6,7 @@ param (
 BeforeDiscovery {
     # installing dependencies
     Install-PowerShellModules -moduleNames ("powershell-yaml")
+    sudo apt-get update && sudo apt-get install -y kubectl
 
     # configuration
     $configurationFile = $parentConfiguration.configurationFile
@@ -50,9 +51,9 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
             try {
                 # Execute the kubectl command and capture output
                 $output = Invoke-Expression $kubectlCommand 2>&1
-                Write-Host "Kubectl output: $output"
-                Write-Host "Namespace: $namespace"
-                Write-Host "Latest version: $latestVersion"
+                Write-Host "Kubectl output: $output" # Log the output for debugging REMOVE LINE
+                Write-Host "Namespace: $namespace" # Log the namespace for debugging REMOVE LINE
+                Write-Host "Latest version: $latestVersion" # Log the latest version for debugging REMOVE LINE
                 
                 # Convert output to string if it's not already
                 $outputString = $output | Out-String

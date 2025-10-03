@@ -50,11 +50,11 @@ BeforeAll {
 Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
 
     BeforeAll {
-        Set-PSDebug -Trace 1 # DEBUGGING - TO BE REMOVED
         $versionThreshold = $_.versionThreshold
     }
 
     Context "Target: <_.namespace>/<_.resourceRegion>/<_.resourceName>" -ForEach $targets {
+
         BeforeAll {
             $resourceName = $_.resourceName
             $resourceRegion = $_.resourceRegion
@@ -64,10 +64,64 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
 
             try {
                 # Update kubeconfig
+                Write-Host "Updating kubeconfig for EKS cluster: $resourceName in region: $resourceRegion"
                 $kubeConfOutput = Invoke-Expression $eksKubecnfCommand 2>&1
                 Write-Host "Kubeconfig update output: $kubeConfOutput"
-                # Execute the kubectl command and capture output
+                
+                # Check if kubeconfig update was successful
+                if ($LASTEXITCODE -ne 0) {
+                    throw "Failed to update kubeconfig. Exit code: $LASTEXITCODE. Output: $kubeConfOutput"
+                }
+                
+                # Test kubectl connectivity first
+                Write-Host "Testing kubectl connectivity..."
+                $connectivityTest = Invoke-Expression "kubectl get pods -n $namespace" 2>&1
+                if ($LASTEXITCODE -ne 0) {
+                    throw "kubectl connectivity test failed. Exit code: $LASTEXITCODE. Output: $connectivityTest"
+                }
+                
+                # Execute the kubectl command and capture output with better error handling
+                Write-Host "Executing kubectl command to get PingDS version..."
                 $output = Invoke-Expression $kubectlCommand 2>&1
+                
+                # Check the exit code to determine if the command was successful
+                if ($LASTEXITCODE -ne 0) {
+                    $errorMessage = "kubectl command failed with exit code: $LASTEXITCODE"
+                    
+                    # Analyze the output to provide more specific error messages
+                    $outputString = $output | Out-String
+                    
+                    if ($outputString -match "pod.*not found") {
+                        $errorMessage += ". Pod 'ds-cts-0' not found in namespace '$namespace'"
+                    }
+                    elseif ($outputString -match "container.*not found") {
+                        $errorMessage += ". Container 'ds' not found in pod 'ds-cts-0'"
+                    }
+                    elseif ($outputString -match "unable to upgrade connection") {
+                        $errorMessage += ". Unable to establish connection to pod (possibly network issues)"
+                    }
+                    elseif ($outputString -match "authentication") {
+                        $errorMessage += ". Authentication failed - check kubectl credentials"
+                    }
+                    elseif ($outputString -match "authorization") {
+                        $errorMessage += ". Authorization failed - insufficient permissions"
+                    }
+                    elseif ($outputString -match "timeout") {
+                        $errorMessage += ". Command timed out - pod may be unresponsive"
+                    }
+                    elseif ($outputString -match "No such file or directory") {
+                        $errorMessage += ". OpenDJ binary not found at expected path '/opt/opendj/bin/status'"
+                    }
+                    elseif ($outputString -match "Connection refused") {
+                        $errorMessage += ". Connection to PingDS server refused - service may be down"
+                    }
+                    else {
+                        $errorMessage += ". Error output: $outputString"
+                    }
+                    
+                    throw $errorMessage
+                }
+                
                 Write-Host "Kubectl command output: $output"
                 
                 # Convert output to string if it's not already
@@ -101,7 +155,7 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
                     # If on latest major version, check if more than 2 minor versions behind
                     elseif ($currentMajor -eq $latestMajor) {
                         $minorDiff = $latestMinor - $currentMinor
-                        if ($minorDiff -gt 2) { # Pass the number of versions via parentConfiguration - versionThreshold
+                        if ($minorDiff -gt $versionThreshold) { # Use versionThreshold from configuration
                             $needsUpgrade = $true
                         }
                     }
@@ -112,12 +166,24 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
                         Write-Host "PingDS does not need upgrading" -ForegroundColor Green
                     }
                 } else {
-                    Write-Warning "No version number found in the expected format (x.y.z)"
-                    Write-Host "Full output:"
-                    Write-Host $outputString
+                    throw "No version number found in the expected format (x.y.z). Output: $outputString"
                 }
             } catch {
-                Write-Error "Failed to execute kubectl command: $_"
+                $errorDetails = @{
+                    'Command' = $kubectlCommand
+                    'Namespace' = $namespace
+                    'Resource' = $resourceName
+                    'Region' = $resourceRegion
+                    'Error' = $_.Exception.Message
+                    'Timestamp' = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+                }
+                
+                Write-Error "PingDS version check failed: $($_.Exception.Message)"
+                Write-Host "Error Details:" -ForegroundColor Red
+                $errorDetails | Format-Table -AutoSize
+                
+                # Re-throw the error so the Pester test fails appropriately
+                throw $_
             }
         }
 

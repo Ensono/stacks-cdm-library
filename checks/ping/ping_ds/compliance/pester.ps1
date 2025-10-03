@@ -60,6 +60,7 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
             $resourceRegion = $_.resourceRegion
             $namespace = $_.namespace
             $eksKubecnfCommand = "aws eks update-kubeconfig --name $resourceName --region $resourceRegion"
+            $kConfigContext = "kubectl config set-context --current --namespace $namespace"
             $kubectlCommand = "kubectl exec -it ds-cts-0 -n $namespace -c ds -- /opt/opendj/bin/status -V"
 
             try {
@@ -67,7 +68,11 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
                 Write-Host "Updating kubeconfig for EKS cluster: $resourceName in region: $resourceRegion"
                 $kubeConfOutput = Invoke-Expression $eksKubecnfCommand 2>&1
                 Write-Host "Kubeconfig update output: $kubeConfOutput"
-                
+
+                Write-Host "Updating K8s config context for in the agent to use namespace: $namespace"
+                $kConfigOutput = Invoke-Expression $kConfigContext 2>&1
+                Write-Host "K8s config context update output: $kConfigOutput"
+
                 # Check if kubeconfig update was successful
                 if ($LASTEXITCODE -ne 0) {
                     throw "Failed to update kubeconfig. Exit code: $LASTEXITCODE. Output: $kubeConfOutput"

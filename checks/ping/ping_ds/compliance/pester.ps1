@@ -69,7 +69,7 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
                 $kubeConfOutput = Invoke-Expression $eksKubecnfCommand 2>&1
                 Write-Host "Kubeconfig update output: $kubeConfOutput"
 
-                Write-Host "Updating K8s config context for in the agent to use namespace: $namespace"
+                Write-Host "Updating K8s config context in the agent to use namespace: $namespace"
                 $kConfigOutput = Invoke-Expression $kConfigContext 2>&1
                 Write-Host "K8s config context update output: $kConfigOutput"
 
@@ -80,7 +80,7 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
                 
                 # Test kubectl connectivity first
                 Write-Host "Testing kubectl connectivity..."
-                $connectivityTest = Invoke-Expression "kubectl get pods -n $namespace" 2>&1
+                $connectivityTest = Invoke-Expression "kubectl get namespaces" 2>&1
                 if ($LASTEXITCODE -ne 0) {
                     throw "kubectl connectivity test failed. Exit code: $LASTEXITCODE. Output: $connectivityTest"
                 }

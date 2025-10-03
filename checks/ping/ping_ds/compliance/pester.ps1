@@ -50,6 +50,7 @@ BeforeAll {
 Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
 
     BeforeAll {
+        Set-PSDebug -Trace 1 # DEBUGGING - TO BE REMOVED
         $versionThreshold = $_.versionThreshold
     }
 

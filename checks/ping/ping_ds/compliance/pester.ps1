@@ -80,10 +80,14 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
                 
                 # Test kubectl connectivity first
                 Write-Host "Testing kubectl connectivity..."
-                $connectivityTest = Invoke-Expression "kubectl get namespaces" 2>&1
-                if ($LASTEXITCODE -ne 0) {
-                    $connectivityErrorString = $connectivityTest | Out-String
-                    throw "kubectl connectivity test failed. Exit code: $LASTEXITCODE. Error: $connectivityErrorString"
+                try {
+                    $connectivityTest = & kubectl get namespaces 2>&1
+                    if ($LASTEXITCODE -ne 0) {
+                        $connectivityErrorString = $connectivityTest | Out-String
+                        throw "kubectl connectivity test failed. Exit code: $LASTEXITCODE. Error: $connectivityErrorString"
+                    }
+                } catch {
+                    throw "kubectl connectivity test failed with exception: $($_.Exception.Message)"
                 }
                 
                 # Execute the kubectl command and capture output with better error handling

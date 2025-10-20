@@ -74,8 +74,8 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
             $envAwsSecretAccessKey = $_.envAwsSecretAccessKey
             # Prepare commands to run in the remote session
             $commands = @(
-                "export AWS_ACCESS_KEY_ID='$envAwsKeyId'",
-                "export AWS_SECRET_ACCESS_KEY='$envAwsSecretAccessKey'",
+                "export AWS_ACCESS_KEY_ID=$envAwsKeyId",
+                "export AWS_SECRET_ACCESS_KEY=$envAwsSecretAccessKey",
                 "aws eks update-kubeconfig --name $resourceName --region $resourceRegion",
                 "kubectl config set-context --current --namespace $namespace",
                 "kubectl exec -it ds-cts-0 -n $namespace -c ds -- /opt/opendj/bin/status -V"

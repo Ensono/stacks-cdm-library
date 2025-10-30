@@ -88,6 +88,7 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
                     --document-name "AWS-RunShellScript" `
                     --comment "Authenticate and configure kubectl context" `
                     --parameters commands=$commands `
+                    --region $resourceRegion `
                     --output text
 
                 # Get the command ID from the result
@@ -98,6 +99,7 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
                 $commandOutput = aws ssm get-command-invocation `
                     --instance-id i-0b9279bc5cfb40f6b `
                     --command-id $commandId `
+                    --region $resourceRegion `
                     --output text
 
                 Write-Host "SSM command output:"

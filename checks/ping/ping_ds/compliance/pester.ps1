@@ -67,6 +67,8 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
     Context "Target: <_.namespace>/<_.resourceRegion>/<_.resourceName>" -ForEach $targets {
 
         BeforeAll {
+            export AWS_ACCESS_KEY_ID=$_.awsKeyId
+            export AWS_SECRET_ACCESS_KEY=$_.awsSecretAccessKey
             $resourceName = $_.resourceName
             $resourceRegion = $_.resourceRegion
             $namespace = $_.namespace

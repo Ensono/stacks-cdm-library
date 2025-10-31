@@ -64,6 +64,10 @@ if ($skipUntilDateTime -gt $dateTime) {
         checkDisplayName = $env:CHECK_DISPLAY_NAME
         checkName = $env:CHECK_NAME
         checkVariantName = $env:CHECK_VARIANT_NAME
+        awsAccessKeyId = $env:AWS_ACCESS_KEY_ID
+        awsSecretAccessKey = $env:AWS_SECRET_ACCESS_KEY
+        envAwsKeyId = $env:ENV_AWS_KEY_ID
+        envAwsSecretAccessKey = $env:ENV_AWS_SECRET_ACCESS_KEY
         configurationFile = $configurationFile
     }
 

@@ -33,10 +33,6 @@ BeforeDiscovery {
     $configurationFile = $parentConfiguration.configurationFile
     $stageName = $parentConfiguration.stageName
     $checkConfiguration = (Get-Content -Path $configurationFile | ConvertFrom-Yaml).($parentConfiguration.checkName)
-    $awsAccessKeyId = $parentConfiguration.awsAccessKeyId
-    $awsSecretAccessKey = $parentConfiguration.awsSecretAccessKey
-    $envAwsKeyId = $parentConfiguration.envAwsKeyId
-    $envAwsSecretAccessKey = $parentConfiguration.envAwsSecretAccessKey
 
     # building the discovery objects
     $discovery = $checkConfiguration
@@ -66,6 +62,10 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
 
     BeforeAll {
         $versionThreshold = $_.versionThreshold
+        $awsAccessKeyId = $parentConfiguration.awsAccessKeyId
+        $awsSecretAccessKey = $parentConfiguration.awsSecretAccessKey
+        $envAwsKeyId = $parentConfiguration.envAwsKeyId
+        $envAwsSecretAccessKey = $parentConfiguration.envAwsSecretAccessKey
     }
 
     Context "Target: <_.namespace>/<_.resourceRegion>/<_.resourceName>" -ForEach $targets {
@@ -81,9 +81,7 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
             # Set-AWSCredential -AccessKey $awsAccessKeyId -SecretKey $awsSecretAccessKey
             # TO BE REMOVED
             Write-Host "Using AWS Key ID: $awsAccessKeyId to authenticate"
-            Write-Host "Using AWS Key ID: ${parentConfiguration.awsAccessKeyId} to authenticate"
-            Invoke-Expression "aws configure set aws_access_key_id $awsAccessKeyId"
-            Invoke-Expression "aws configure set aws_secret_access_key $awsSecretAccessKey"
+
             # Test AWS authentication
             $authTest = aws sts get-caller-identity 2>&1
             if ($LASTEXITCODE -ne 0) {

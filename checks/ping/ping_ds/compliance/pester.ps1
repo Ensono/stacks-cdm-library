@@ -84,8 +84,12 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
             Write-Host "Using AWS Key ID: ${parentConfiguration.awsAccessKeyId} to authenticate"
             Invoke-Expression "aws configure set aws_access_key_id $awsAccessKeyId"
             Invoke-Expression "aws configure set aws_secret_access_key $awsSecretAccessKey"
-            $authStatus = Invoke-Expression "aws configure list"
-            Write-Host "AWS Configure List:`n$authStatus"
+            # Test AWS authentication
+            $authTest = aws sts get-caller-identity 2>&1
+            if ($LASTEXITCODE -ne 0) {
+                throw "AWS authentication failed: $authTest"
+            }
+            Write-Host "AWS authentication successful: $authTest"
             # Prepare commands to run in the remote session
             $commands = @(
                 "export AWS_ACCESS_KEY_ID=$envAwsKeyId",

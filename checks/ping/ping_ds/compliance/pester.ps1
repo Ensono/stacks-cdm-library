@@ -67,17 +67,17 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
     Context "Target: <_.namespace>/<_.resourceRegion>/<_.resourceName>" -ForEach $targets {
 
         BeforeAll {
-            $AWS_ACCESS_KEY_ID = $_.awsKeyId
-            $AWS_SECRET_ACCESS_KEY = $_.awsSecretAccessKey
+            $awsAccessKeyId = $env:AWS_KEY_ID
+            $awsSecretAccessKey = $env:AWS_SECRET_ACCESS_KEY
+            $envAwsKeyId = $env:ENV_AWS_KEY_ID
+            $envAwsSecretAccessKey = $env:ENV_AWS_SECRET_ACCESS_KEY
             $resourceName = $_.resourceName
             $resourceRegion = $_.resourceRegion
             $namespace = $_.namespace
-            $envAwsKeyId = $_.envAwsKeyId
-            $envAwsSecretAccessKey = $_.envAwsSecretAccessKey
             # Authenticate with AWS
-            Set-AWSCredential -AccessKey $AWS_ACCESS_KEY_ID -SecretKey $AWS_SECRET_ACCESS_KEY
+            Set-AWSCredential -AccessKey $awsAccessKeyId -SecretKey $awsSecretAccessKey
             # TO BE REMOVED
-            Write-Host "Using AWS Key ID: $AWS_ACCESS_KEY_ID to authenticate"
+            Write-Host "Using AWS Key ID: $awsAccessKeyId to authenticate"
             $authStatus = Invoke-Expression "aws configure list"
             Write-Host "AWS Configure List:`n$authStatus"
             # Prepare commands to run in the remote session

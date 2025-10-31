@@ -33,6 +33,10 @@ BeforeDiscovery {
     $configurationFile = $parentConfiguration.configurationFile
     $stageName = $parentConfiguration.stageName
     $checkConfiguration = (Get-Content -Path $configurationFile | ConvertFrom-Yaml).($parentConfiguration.checkName)
+    $awsAccessKeyId = $parentConfiguration.awsAccessKeyId
+    $awsSecretAccessKey = $parentConfiguration.awsSecretAccessKey
+    $envAwsKeyId = $parentConfiguration.envAwsKeyId
+    $envAwsSecretAccessKey = $parentConfiguration.envAwsSecretAccessKey
 
     # building the discovery objects
     $discovery = $checkConfiguration
@@ -67,10 +71,6 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
     Context "Target: <_.namespace>/<_.resourceRegion>/<_.resourceName>" -ForEach $targets {
 
         BeforeAll {
-            $awsAccessKeyId = $parentConfiguration.awsAccessKeyId
-            $awsSecretAccessKey = $parentConfiguration.awsSecretAccessKey
-            $envAwsKeyId = $parentConfiguration.envAwsKeyId
-            $envAwsSecretAccessKey = $parentConfiguration.envAwsSecretAccessKey
             $resourceName = $_.resourceName
             $resourceRegion = $_.resourceRegion
             $namespace = $_.namespace

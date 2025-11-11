@@ -62,10 +62,34 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
 
     BeforeAll {
         $versionThreshold = $_.versionThreshold
+        
+        # Debug: Check what's in parentConfiguration
+        Write-Host "Debug - Parent Configuration Keys:"
+        $parentConfiguration.Keys | ForEach-Object { 
+            Write-Host "  $_ : $($parentConfiguration[$_])" 
+        }
+
+
         $awsAccessKeyId = $parentConfiguration.awsAccessKeyId
         $awsSecretAccessKey = $parentConfiguration.awsSecretAccessKey
         $envAwsKeyId = $parentConfiguration.envAwsKeyId
         $envAwsSecretAccessKey = $parentConfiguration.envAwsSecretAccessKey
+
+        # Debug: Check if credentials are retrieved
+        Write-Host "Debug - Retrieved credentials:"
+        Write-Host "  awsAccessKeyId: $($awsAccessKeyId -replace '.', '*')"
+        Write-Host "  awsSecretAccessKey: $(if($awsSecretAccessKey) { '***SET***' } else { 'NOT SET' })"
+        Write-Host "  envAwsKeyId: $($envAwsKeyId -replace '.', '*')"
+        Write-Host "  envAwsSecretAccessKey: $(if($envAwsSecretAccessKey) { '***SET***' } else { 'NOT SET' })"
+
+        # Check if credentials are empty and throw early
+        if ([string]::IsNullOrEmpty($awsAccessKeyId) -or [string]::IsNullOrEmpty($awsSecretAccessKey)) {
+            throw "AWS credentials are not set. Check that AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environment variables are configured in the pipeline."
+        }
+        
+        if ([string]::IsNullOrEmpty($envAwsKeyId) -or [string]::IsNullOrEmpty($envAwsSecretAccessKey)) {
+            throw "Environment AWS credentials are not set. Check that ENV_AWS_KEY_ID and ENV_AWS_SECRET_ACCESS_KEY environment variables are configured in the pipeline."
+        }
     }
 
     Context "Target: <_.namespace>/<_.resourceRegion>/<_.resourceName>" -ForEach $targets {

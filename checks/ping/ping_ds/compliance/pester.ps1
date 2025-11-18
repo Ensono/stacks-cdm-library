@@ -98,20 +98,41 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
             $resourceName = $_.resourceName
             $resourceRegion = $_.resourceRegion
             $namespace = $_.namespace
-            # Authenticate with AWS
-            $env:AWS_ACCESS_KEY_ID = $awsAccessKeyId
-            $env:AWS_SECRET_ACCESS_KEY = $awsSecretAccessKey
+
+            # Clean and validate credentials before setting environment variables
+            $cleanAwsAccessKeyId = $awsAccessKeyId.Trim()
+            $cleanAwsSecretAccessKey = $awsSecretAccessKey.Trim()
+
+            # Validate credential format
+            if ($cleanAwsAccessKeyId -notmatch '^AKIA[0-9A-Z]{16}$') {
+            throw "Invalid AWS Access Key ID format: $cleanAwsAccessKeyId"
+            }
+
+            # Set environment variables with cleaned credentials
+            $env:AWS_ACCESS_KEY_ID = $cleanAwsAccessKeyId
+            $env:AWS_SECRET_ACCESS_KEY = $cleanAwsSecretAccessKey
             $env:AWS_DEFAULT_REGION = $resourceRegion
-            # Set-AWSCredential -AccessKey $awsAccessKeyId -SecretKey $awsSecretAccessKey
+
             # TO BE REMOVED
-            Write-Host "Using AWS Key ID: $awsAccessKeyId to authenticate"
+            Write-Host "Using AWS Key ID: $cleanAwsAccessKeyId to authenticate"
+            Write-Host "Using AWS Region: $resourceRegion"
 
             # Test AWS authentication
-            $authTest = aws sts get-caller-identity 2>&1
-            if ($LASTEXITCODE -ne 0) {
-                throw "AWS authentication failed: $authTest"
+            try {
+                $authTest = & aws sts get-caller-identity --output json 2>&1
+                if ($LASTEXITCODE -ne 0) {
+                    Write-Host "Raw AWS CLI Error Output:"
+                    Write-Host $authTest
+                    throw "AWS authentication failed with exit code $LASTEXITCODE"
+                }
+                $authResult = $authTest | ConvertFrom-Json
+                Write-Host "AWS authentication successful. Account: $($authResult.Account), User: $($authResult.Arn)"
+            } catch {
+                Write-Host "Exception during AWS authentication: $($_.Exception.Message)"
+                Write-Host "Credential lengths - AccessKey: $($cleanAwsAccessKeyId.Length), SecretKey: $($cleanAwsSecretAccessKey.Length)"
+                throw "AWS authentication failed: $_"
             }
-            Write-Host "AWS authentication successful: $authTest"
+            
             # Prepare commands to run in the remote session
             $commands = @(
                 "export AWS_ACCESS_KEY_ID=$envAwsKeyId",

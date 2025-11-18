@@ -62,6 +62,16 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
 
     BeforeAll {
         $versionThreshold = $_.versionThreshold
+
+        # DEBUG: Check parentConfiguration immediately
+        Write-Host "=== Pester.ps1 Debug ==="
+        Write-Host "ParentConfiguration awsSecretAccessKey length: $($parentConfiguration.awsSecretAccessKey.Length)"
+        Write-Host "ParentConfiguration envAwsSecretAccessKey length: $($parentConfiguration.envAwsSecretAccessKey.Length)"
+        
+        # Check the actual characters at position 20-25 to see what's there
+        if ($parentConfiguration.awsSecretAccessKey.Length -ge 25) {
+            Write-Host "Characters 20-25: '$($parentConfiguration.awsSecretAccessKey.Substring(20, 5))'"
+        }
         
         # Debug: Check what's in parentConfiguration
         Write-Host "Debug - Parent Configuration Keys:"

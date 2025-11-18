@@ -99,6 +99,36 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
             $resourceRegion = $_.resourceRegion
             $namespace = $_.namespace
 
+            # Enhanced debugging
+            Write-Host "=== AWS Credential Debug Information ==="
+            Write-Host "Access Key ID Length: $($awsAccessKeyId.Length)"
+            Write-Host "Secret Access Key Length: $($awsSecretAccessKey.Length)"
+            Write-Host "Access Key ID: $($awsAccessKeyId.Substring(0, 4))...$($awsAccessKeyId.Substring([Math]::Max($awsAccessKeyId.Length-4, 4)))"
+
+            # Check for hidden characters or encoding issues
+            $accessKeyBytes = [System.Text.Encoding]::UTF8.GetBytes($awsAccessKeyId)
+            $secretKeyBytes = [System.Text.Encoding]::UTF8.GetBytes($awsSecretAccessKey)
+            Write-Host "Access Key Byte Length: $($accessKeyBytes.Length)"
+            Write-Host "Secret Key Byte Length: $($secretKeyBytes.Length)"
+
+            # Check if secret key looks like it might be Base64 encoded
+            if ($awsSecretAccessKey.Length -lt 35) {
+                Write-Host "WARNING: Secret key appears to be too short (expected ~40 chars)"
+                
+                # Try to detect if it's Base64 encoded
+                try {
+                    $decoded = [System.Convert]::FromBase64String($awsSecretAccessKey)
+                    $decodedString = [System.Text.Encoding]::UTF8.GetString($decoded)
+                    Write-Host "Possible Base64 decoded length: $($decodedString.Length)"
+                    if ($decodedString.Length -gt 35) {
+                        Write-Host "Using Base64 decoded secret key"
+                        $awsSecretAccessKey = $decodedString
+                    }
+                } catch {
+                    Write-Host "Not Base64 encoded"
+                }
+            }
+
             # Clean and validate credentials before setting environment variables
             $cleanAwsAccessKeyId = $awsAccessKeyId.Trim()
             $cleanAwsSecretAccessKey = $awsSecretAccessKey.Trim()
@@ -106,6 +136,11 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
             # Validate credential format
             if ($cleanAwsAccessKeyId -notmatch '^AKIA[0-9A-Z]{16}$') {
             throw "Invalid AWS Access Key ID format: $cleanAwsAccessKeyId"
+            }
+
+            # Validate secret key length
+            if ($cleanAwsSecretAccessKey.Length -lt 35) {
+                throw "AWS Secret Access Key appears to be too short: $($cleanAwsSecretAccessKey.Length) characters (expected ~40)"
             }
 
             # Set environment variables with cleaned credentials
@@ -116,23 +151,44 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
             # TO BE REMOVED
             Write-Host "Using AWS Key ID: $cleanAwsAccessKeyId to authenticate"
             Write-Host "Using AWS Region: $resourceRegion"
+            Write-Host "Final Secret Key Length: $($cleanAwsSecretAccessKey.Length)"
 
             # Test AWS authentication
             try {
+                # First test with AWS CLI version to ensure it's working
+                $awsVersion = & aws --version 2>&1
+                Write-Host "AWS CLI Version: $awsVersion"
+
+                # Test authentication
                 $authTest = & aws sts get-caller-identity --output json 2>&1
                 if ($LASTEXITCODE -ne 0) {
                     Write-Host "Raw AWS CLI Error Output:"
-                    Write-Host $authTest
-                    throw "AWS authentication failed with exit code $LASTEXITCODE"
+                    $authTest | ForEach-Object { Write-Host $_ }
+                    
+                    # Try alternative authentication method
+                    Write-Host "Trying alternative authentication..."
+                    $authTest2 = & aws sts get-caller-identity --no-cli-pager 2>&1
+                    if ($LASTEXITCODE -ne 0) {
+                        throw "AWS authentication failed with exit code $LASTEXITCODE"
+                    } else {
+                        $authTest = $authTest2
+                    }
                 }
+
                 $authResult = $authTest | ConvertFrom-Json
                 Write-Host "AWS authentication successful. Account: $($authResult.Account), User: $($authResult.Arn)"
             } catch {
                 Write-Host "Exception during AWS authentication: $($_.Exception.Message)"
-                Write-Host "Credential lengths - AccessKey: $($cleanAwsAccessKeyId.Length), SecretKey: $($cleanAwsSecretAccessKey.Length)"
+                Write-Host "Final credential lengths - AccessKey: $($cleanAwsAccessKeyId.Length), SecretKey: $($cleanAwsSecretAccessKey.Length)"
+
+                # Additional debugging - check environment variables
+                Write-Host "Environment variable check:"
+                Write-Host "AWS_ACCESS_KEY_ID length: $($env:AWS_ACCESS_KEY_ID.Length)"
+                Write-Host "AWS_SECRET_ACCESS_KEY length: $($env:AWS_SECRET_ACCESS_KEY.Length)"
+
                 throw "AWS authentication failed: $_"
             }
-            
+
             # Prepare commands to run in the remote session
             $commands = @(
                 "export AWS_ACCESS_KEY_ID=$envAwsKeyId",

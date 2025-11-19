@@ -184,45 +184,28 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
             }
 
             # Prepare commands to run in the remote session
-            $commands = @(
+            $commandsJson = @(
                 "export AWS_ACCESS_KEY_ID=$envAwsKeyId",
-                "export AWS_SECRET_ACCESS_KEY=$envAwsSecretAccessKey",
+                "export AWS_SECRET_ACCESS_KEY=$envAwsSecretAccessKey", 
                 "aws eks update-kubeconfig --name $resourceName --region $resourceRegion",
                 "kubectl config set-context --current --namespace $namespace",
-                "kubectl exec -it ds-cts-0 -n $namespace -c ds -- /opt/opendj/bin/status -V"
-            )
+                "kubectl exec ds-cts-0 -n $namespace -c ds -- /opt/opendj/bin/status -V"
+            ) | ConvertTo-Json
 
-            # Add this before the main SSM send-command
-            Write-Host "=== Pre-SSM Validation ==="
-            Write-Host "Testing SSM connectivity..."
-
-            try {
-                # Test basic SSM access
-                $ssmTest = aws ssm describe-instance-information --instance-information-filter-list key=InstanceIds,valueSet=i-0b9279bc5cfb40f6b --region $resourceRegion --output text 2>&1
-                
-                if ($LASTEXITCODE -eq 0) {
-                    Write-Host "SSM instance found: $ssmTest"
-                } else {
-                    Write-Host "SSM instance not found or not accessible: $ssmTest"
-                    throw "Target instance is not available for SSM"
-                }
-            } catch {
-                Write-Host "SSM connectivity test failed: $_"
-                throw $_
-            }
+            Write-Host "Commands JSON: $commandsJson"
 
             try {
                 # Run the commands using SSM send-command with JSON output
                 Write-Host "Sending SSM command with parameters:"
                 Write-Host "  Instance ID: i-0b9279bc5cfb40f6b"
                 Write-Host "  Region: $resourceRegion"
-                Write-Host "  Commands: $($commands -join '; ')"
+                Write-Host "  Commands JSON: $commandsJson"
                 
                 $sendCommandResult = aws ssm send-command `
                     --instance-ids i-0b9279bc5cfb40f6b `
                     --document-name "AWS-RunShellScript" `
                     --comment "Authenticate and configure kubectl context" `
-                    --parameters commands=$commands `
+                    --parameters "commands=$commandsJson" `
                     --region $resourceRegion `
                     --output json
 

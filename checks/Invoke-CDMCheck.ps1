@@ -37,16 +37,6 @@ $script:awsSecretAccessKey = $env:AWS_SECRET_ACCESS_KEY
 $script:envAwsKeyId = $env:ENV_AWS_KEY_ID
 $script:envAwsSecretAccessKey = $env:ENV_AWS_SECRET_ACCESS_KEY
 
-# DEBUG: Check environment variable lengths immediately
-Write-Host "=== Invoke-CDMCheck.ps1 Debug ==="
-Write-Host "Raw env:AWS_SECRET_ACCESS_KEY length: $($env:AWS_SECRET_ACCESS_KEY.Length)"
-Write-Host "Script awsSecretAccessKey length: $($script:awsSecretAccessKey.Length)"
-Write-Host "Raw env:ENV_AWS_SECRET_ACCESS_KEY length: $($env:ENV_AWS_SECRET_ACCESS_KEY.Length)"
-Write-Host "Script envAwsSecretAccessKey length: $($script:envAwsSecretAccessKey.Length)"
-
-# Check if they're the same object
-Write-Host "Are they identical? $($env:AWS_SECRET_ACCESS_KEY -eq $script:awsSecretAccessKey)"
-
 # configuration file
 if ([string]::IsNullOrEmpty($env:CONFIGURATION_VARIANT_NAME)) {
     $script:configurationFile = ("{0}/{1}" -f $checkDirectory , "configuration.yml")

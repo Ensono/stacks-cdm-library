@@ -62,11 +62,6 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
 
     BeforeAll {
         $versionThreshold = $_.versionThreshold
-
-        # DEBUG: Check parentConfiguration immediately
-        Write-Host "=== Pester.ps1 Debug ==="
-        Write-Host "ParentConfiguration awsSecretAccessKey length: $($parentConfiguration.awsSecretAccessKey.Length)"
-        Write-Host "ParentConfiguration envAwsSecretAccessKey length: $($parentConfiguration.envAwsSecretAccessKey.Length)"
     }
 
     Context "Target: <_.namespace>/<_.resourceRegion>/<_.resourceName>" -ForEach $targets {
@@ -89,11 +84,6 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
             if ([string]::IsNullOrEmpty($envAwsKeyId) -or [string]::IsNullOrEmpty($envAwsSecretAccessKey)) {
                 throw "Environment AWS credentials are not set. Check that ENV_AWS_KEY_ID and ENV_AWS_SECRET_ACCESS_KEY environment variables are configured in the pipeline."
             }
-
-            # DEBUG: Check the actual types
-            Write-Host "=== Type Analysis ==="
-            Write-Host "awsSecretAccessKey type: $($parentConfiguration.awsSecretAccessKey.GetType().FullName)"
-            Write-Host "awsSecretAccessKey assigned type: $($awsSecretAccessKey.GetType().FullName)"
 
             # Handle different object types
             if ($parentConfiguration.awsSecretAccessKey -is [System.Security.SecureString]) {
@@ -118,15 +108,6 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
                 # Force string conversion
                 $envAwsSecretAccessKey = $parentConfiguration.envAwsSecretAccessKey.ToString()
             }
-
-            Write-Host "After conversion - awsSecretAccessKey length: $($awsSecretAccessKey.Length)"
-            Write-Host "After conversion - envAwsSecretAccessKey length: $($envAwsSecretAccessKey.Length)"
-
-            # Enhanced debugging
-            Write-Host "=== AWS Credential Debug Information ==="
-            Write-Host "Access Key ID Length: $($awsAccessKeyId.Length)"
-            Write-Host "Secret Access Key Length: $($awsSecretAccessKey.Length)"
-            Write-Host "Access Key ID: $($awsAccessKeyId.Substring(0, 4))...$($awsAccessKeyId.Substring([Math]::Max($awsAccessKeyId.Length-4, 4)))"
 
             # Check for hidden characters or encoding issues
             $accessKeyBytes = [System.Text.Encoding]::UTF8.GetBytes($awsAccessKeyId)
@@ -171,11 +152,6 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
             $env:AWS_SECRET_ACCESS_KEY = $cleanAwsSecretAccessKey
             $env:AWS_DEFAULT_REGION = $resourceRegion
 
-            # TO BE REMOVED
-            Write-Host "Using AWS Key ID: $cleanAwsAccessKeyId to authenticate"
-            Write-Host "Using AWS Region: $resourceRegion"
-            Write-Host "Final Secret Key Length: $($cleanAwsSecretAccessKey.Length)"
-
             # Test AWS authentication
             try {
                 # First test with AWS CLI version to ensure it's working
@@ -204,11 +180,6 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
                 Write-Host "Exception during AWS authentication: $($_.Exception.Message)"
                 Write-Host "Final credential lengths - AccessKey: $($cleanAwsAccessKeyId.Length), SecretKey: $($cleanAwsSecretAccessKey.Length)"
 
-                # Additional debugging - check environment variables
-                Write-Host "Environment variable check:"
-                Write-Host "AWS_ACCESS_KEY_ID length: $($env:AWS_ACCESS_KEY_ID.Length)"
-                Write-Host "AWS_SECRET_ACCESS_KEY length: $($env:AWS_SECRET_ACCESS_KEY.Length)"
-
                 throw "AWS authentication failed: $_"
             }
 
@@ -221,8 +192,32 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
                 "kubectl exec -it ds-cts-0 -n $namespace -c ds -- /opt/opendj/bin/status -V"
             )
 
+            # Add this before the main SSM send-command
+            Write-Host "=== Pre-SSM Validation ==="
+            Write-Host "Testing SSM connectivity..."
+
+            try {
+                # Test basic SSM access
+                $ssmTest = aws ssm describe-instance-information --instance-information-filter-list key=InstanceIds,valueSet=i-0b9279bc5cfb40f6b --region $resourceRegion --output text 2>&1
+                
+                if ($LASTEXITCODE -eq 0) {
+                    Write-Host "SSM instance found: $ssmTest"
+                } else {
+                    Write-Host "SSM instance not found or not accessible: $ssmTest"
+                    throw "Target instance is not available for SSM"
+                }
+            } catch {
+                Write-Host "SSM connectivity test failed: $_"
+                throw $_
+            }
+
             try {
                 # Run the commands using SSM send-command
+                Write-Host "Sending SSM command with parameters:"
+                Write-Host "  Instance ID: i-0b9279bc5cfb40f6b"
+                Write-Host "  Region: $resourceRegion"
+                Write-Host "  Commands: $($commands -join '; ')"
+                
                 $sendCommandResult = aws ssm send-command `
                     --instance-ids i-0b9279bc5cfb40f6b `
                     --document-name "AWS-RunShellScript" `
@@ -231,24 +226,84 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
                     --region $resourceRegion `
                     --output text
 
-                # Get the command ID from the result
-                $commandId = ($sendCommandResult | Select-String "COMMAND_ID" | ForEach-Object { $_.Line.Split("`t")[-1] }).Trim()
+                Write-Host "Raw SSM send-command result:"
+                if ($sendCommandResult) {
+                    $sendCommandResult | ForEach-Object { Write-Host "  $_" }
+                } else {
+                    Write-Host "  (null or empty result)"
+                }
+                
+                # Check if the command was successful
+                if ($LASTEXITCODE -ne 0) {
+                    throw "SSM send-command failed with exit code: $LASTEXITCODE"
+                }
+                
+                if (-not $sendCommandResult) {
+                    throw "SSM send-command returned no output"
+                }
+
+                # Get the command ID from the result with better error handling
+                $commandIdMatch = $sendCommandResult | Select-String "COMMAND_ID"
+                if (-not $commandIdMatch) {
+                    Write-Host "Could not find COMMAND_ID in output. Full output:"
+                    $sendCommandResult | ForEach-Object { Write-Host "  $_" }
+                    throw "Could not extract COMMAND_ID from SSM send-command output"
+                }
+                
+                $commandId = ($commandIdMatch | ForEach-Object { $_.Line.Split("`t")[-1] }).Trim()
+                
+                if ([string]::IsNullOrEmpty($commandId)) {
+                    throw "Extracted command ID is null or empty"
+                }
+                
+                Write-Host "Extracted Command ID: $commandId"
 
                 # Wait for the command to finish and get the output
-                Start-Sleep -Seconds 5
+                Write-Host "Waiting for SSM command to complete..."
+                Start-Sleep -Seconds 10  # Increased wait time
+
                 $commandOutput = aws ssm get-command-invocation `
                     --instance-id i-0b9279bc5cfb40f6b `
                     --command-id $commandId `
                     --region $resourceRegion `
                     --output text
 
-                Write-Host "SSM command output:"
-                Write-Host $commandOutput
+                if ($LASTEXITCODE -ne 0) {
+                    Write-Host "SSM get-command-invocation failed with exit code: $LASTEXITCODE"
+                    
+                    # Try to get status first
+                    $commandStatus = aws ssm list-command-invocations `
+                        --command-id $commandId `
+                        --region $resourceRegion `
+                        --output text
+                        
+                    Write-Host "Command status: $commandStatus"
+                    throw "Failed to get SSM command invocation"
+                }
 
-                # You can now parse $commandOutput and use it later in your script
+                Write-Host "SSM command output:"
+                if ($commandOutput) {
+                    Write-Host $commandOutput
+                } else {
+                    Write-Host "(No output returned)"
+                }
+
             } catch {
-                Write-Error "Failed to send command via SSM: $_"
-                exit 1
+                Write-Host "=== SSM Command Execution Error ==="
+                Write-Host "Error Type: $($_.Exception.GetType().FullName)"
+                Write-Host "Error Message: $($_.Exception.Message)"
+                Write-Host "Error Line: $($_.InvocationInfo.ScriptLineNumber)"
+                Write-Host "Error Position: $($_.InvocationInfo.PositionMessage)"
+                
+                # Additional AWS CLI debugging
+                Write-Host "=== AWS CLI Debugging ==="
+                $awsIdentity = aws sts get-caller-identity --output text 2>&1
+                Write-Host "Current AWS identity: $awsIdentity"
+                
+                $ssmAccess = aws ssm describe-instance-information --max-results 1 --region $resourceRegion --output text 2>&1
+                Write-Host "SSM access test: $ssmAccess"
+                
+                throw "Failed to send command via SSM: $_"
             }
         }
 

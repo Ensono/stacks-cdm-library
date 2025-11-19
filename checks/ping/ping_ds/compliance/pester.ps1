@@ -67,52 +67,6 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
         Write-Host "=== Pester.ps1 Debug ==="
         Write-Host "ParentConfiguration awsSecretAccessKey length: $($parentConfiguration.awsSecretAccessKey.Length)"
         Write-Host "ParentConfiguration envAwsSecretAccessKey length: $($parentConfiguration.envAwsSecretAccessKey.Length)"
-
-        $awsAccessKeyId = $parentConfiguration.awsAccessKeyId
-        $awsSecretAccessKey = $parentConfiguration.awsSecretAccessKey
-        $envAwsKeyId = $parentConfiguration.envAwsKeyId
-        $envAwsSecretAccessKey = $parentConfiguration.envAwsSecretAccessKey
-
-         # Check if credentials are empty and throw early
-        if ([string]::IsNullOrEmpty($awsAccessKeyId) -or [string]::IsNullOrEmpty($awsSecretAccessKey)) {
-            throw "AWS credentials are not set. Check that AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environment variables are configured in the pipeline."
-        }
-        
-        if ([string]::IsNullOrEmpty($envAwsKeyId) -or [string]::IsNullOrEmpty($envAwsSecretAccessKey)) {
-            throw "Environment AWS credentials are not set. Check that ENV_AWS_KEY_ID and ENV_AWS_SECRET_ACCESS_KEY environment variables are configured in the pipeline."
-        }
-
-        # DEBUG: Check the actual types
-        Write-Host "=== Type Analysis ==="
-        Write-Host "awsSecretAccessKey type: $($parentConfiguration.awsSecretAccessKey.GetType().FullName)"
-        Write-Host "awsSecretAccessKey assigned type: $($awsSecretAccessKey.GetType().FullName)"
-
-        # Handle different object types
-        if ($parentConfiguration.awsSecretAccessKey -is [System.Security.SecureString]) {
-            Write-Host "Converting SecureString to plain text"
-            $awsSecretAccessKey = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($parentConfiguration.awsSecretAccessKey))
-        } elseif ($parentConfiguration.awsSecretAccessKey -is [PSCredential]) {
-            Write-Host "Extracting from PSCredential"
-            $awsSecretAccessKey = $parentConfiguration.awsSecretAccessKey.GetNetworkCredential().Password
-        } else {
-            # Force string conversion
-            $awsSecretAccessKey = $parentConfiguration.awsSecretAccessKey.ToString()
-        }
-
-        # Same for environment credentials
-        if ($parentConfiguration.envAwsSecretAccessKey -is [System.Security.SecureString]) {
-            Write-Host "Converting env SecureString to plain text"
-            $envAwsSecretAccessKey = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($parentConfiguration.envAwsSecretAccessKey))
-        } elseif ($parentConfiguration.envAwsSecretAccessKey -is [PSCredential]) {
-            Write-Host "Extracting env from PSCredential"
-            $envAwsSecretAccessKey = $parentConfiguration.envAwsSecretAccessKey.GetNetworkCredential().Password
-        } else {
-            # Force string conversion
-            $envAwsSecretAccessKey = $parentConfiguration.envAwsSecretAccessKey.ToString()
-        }
-
-        Write-Host "After conversion - awsSecretAccessKey length: $($awsSecretAccessKey.Length)"
-        Write-Host "After conversion - envAwsSecretAccessKey length: $($envAwsSecretAccessKey.Length)"
     }
 
     Context "Target: <_.namespace>/<_.resourceRegion>/<_.resourceName>" -ForEach $targets {
@@ -121,6 +75,52 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
             $resourceName = $_.resourceName
             $resourceRegion = $_.resourceRegion
             $namespace = $_.namespace
+
+            $awsAccessKeyId = $parentConfiguration.awsAccessKeyId
+            $awsSecretAccessKey = [string]$parentConfiguration.awsSecretAccessKey
+            $envAwsKeyId = $parentConfiguration.envAwsKeyId
+            $envAwsSecretAccessKey = [string]$parentConfiguration.envAwsSecretAccessKey
+            
+            # Check if credentials are empty and throw early
+            if ([string]::IsNullOrEmpty($awsAccessKeyId) -or [string]::IsNullOrEmpty($awsSecretAccessKey)) {
+                throw "AWS credentials are not set. Check that AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environment variables are configured in the pipeline."
+            }
+            
+            if ([string]::IsNullOrEmpty($envAwsKeyId) -or [string]::IsNullOrEmpty($envAwsSecretAccessKey)) {
+                throw "Environment AWS credentials are not set. Check that ENV_AWS_KEY_ID and ENV_AWS_SECRET_ACCESS_KEY environment variables are configured in the pipeline."
+            }
+
+            # DEBUG: Check the actual types
+            Write-Host "=== Type Analysis ==="
+            Write-Host "awsSecretAccessKey type: $($parentConfiguration.awsSecretAccessKey.GetType().FullName)"
+            Write-Host "awsSecretAccessKey assigned type: $($awsSecretAccessKey.GetType().FullName)"
+
+            # Handle different object types
+            if ($parentConfiguration.awsSecretAccessKey -is [System.Security.SecureString]) {
+                Write-Host "Converting SecureString to plain text"
+                $awsSecretAccessKey = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($parentConfiguration.awsSecretAccessKey))
+            } elseif ($parentConfiguration.awsSecretAccessKey -is [PSCredential]) {
+                Write-Host "Extracting from PSCredential"
+                $awsSecretAccessKey = $parentConfiguration.awsSecretAccessKey.GetNetworkCredential().Password
+            } else {
+                # Force string conversion
+                $awsSecretAccessKey = $parentConfiguration.awsSecretAccessKey.ToString()
+            }
+
+            # Same for environment credentials
+            if ($parentConfiguration.envAwsSecretAccessKey -is [System.Security.SecureString]) {
+                Write-Host "Converting env SecureString to plain text"
+                $envAwsSecretAccessKey = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($parentConfiguration.envAwsSecretAccessKey))
+            } elseif ($parentConfiguration.envAwsSecretAccessKey -is [PSCredential]) {
+                Write-Host "Extracting env from PSCredential"
+                $envAwsSecretAccessKey = $parentConfiguration.envAwsSecretAccessKey.GetNetworkCredential().Password
+            } else {
+                # Force string conversion
+                $envAwsSecretAccessKey = $parentConfiguration.envAwsSecretAccessKey.ToString()
+            }
+
+            Write-Host "After conversion - awsSecretAccessKey length: $($awsSecretAccessKey.Length)"
+            Write-Host "After conversion - envAwsSecretAccessKey length: $($envAwsSecretAccessKey.Length)"
 
             # Enhanced debugging
             Write-Host "=== AWS Credential Debug Information ==="

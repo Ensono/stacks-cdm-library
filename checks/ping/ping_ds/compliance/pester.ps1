@@ -212,7 +212,7 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
             }
 
             try {
-                # Run the commands using SSM send-command
+                # Run the commands using SSM send-command with JSON output
                 Write-Host "Sending SSM command with parameters:"
                 Write-Host "  Instance ID: i-0b9279bc5cfb40f6b"
                 Write-Host "  Region: $resourceRegion"
@@ -224,14 +224,10 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
                     --comment "Authenticate and configure kubectl context" `
                     --parameters commands=$commands `
                     --region $resourceRegion `
-                    --output text
+                    --output json
 
                 Write-Host "Raw SSM send-command result:"
-                if ($sendCommandResult) {
-                    $sendCommandResult | ForEach-Object { Write-Host "  $_" }
-                } else {
-                    Write-Host "  (null or empty result)"
-                }
+                Write-Host $sendCommandResult
                 
                 # Check if the command was successful
                 if ($LASTEXITCODE -ne 0) {
@@ -242,31 +238,32 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
                     throw "SSM send-command returned no output"
                 }
 
-                # Get the command ID from the result with better error handling
-                $commandIdMatch = $sendCommandResult | Select-String "COMMAND_ID"
-                if (-not $commandIdMatch) {
-                    Write-Host "Could not find COMMAND_ID in output. Full output:"
-                    $sendCommandResult | ForEach-Object { Write-Host "  $_" }
-                    throw "Could not extract COMMAND_ID from SSM send-command output"
+                # Parse JSON response to get command ID
+                try {
+                    $commandResponse = $sendCommandResult | ConvertFrom-Json
+                    $commandId = $commandResponse.Command.CommandId
+                    
+                    if ([string]::IsNullOrEmpty($commandId)) {
+                        throw "Command ID not found in JSON response"
+                    }
+                    
+                    Write-Host "Extracted Command ID: $commandId"
+                } catch {
+                    Write-Host "Failed to parse JSON response: $_"
+                    Write-Host "Raw response: $sendCommandResult"
+                    throw "Could not parse SSM command response"
                 }
-                
-                $commandId = ($commandIdMatch | ForEach-Object { $_.Line.Split("`t")[-1] }).Trim()
-                
-                if ([string]::IsNullOrEmpty($commandId)) {
-                    throw "Extracted command ID is null or empty"
-                }
-                
-                Write-Host "Extracted Command ID: $commandId"
 
                 # Wait for the command to finish and get the output
                 Write-Host "Waiting for SSM command to complete..."
-                Start-Sleep -Seconds 10  # Increased wait time
+                Start-Sleep -Seconds 10
 
+                # Get command invocation with JSON output for easier parsing
                 $commandOutput = aws ssm get-command-invocation `
                     --instance-id i-0b9279bc5cfb40f6b `
                     --command-id $commandId `
                     --region $resourceRegion `
-                    --output text
+                    --output json
 
                 if ($LASTEXITCODE -ne 0) {
                     Write-Host "SSM get-command-invocation failed with exit code: $LASTEXITCODE"
@@ -275,33 +272,37 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
                     $commandStatus = aws ssm list-command-invocations `
                         --command-id $commandId `
                         --region $resourceRegion `
-                        --output text
+                        --output json
                         
                     Write-Host "Command status: $commandStatus"
                     throw "Failed to get SSM command invocation"
                 }
 
-                Write-Host "SSM command output:"
-                if ($commandOutput) {
-                    Write-Host $commandOutput
-                } else {
-                    Write-Host "(No output returned)"
+                # Parse the command invocation result
+                try {
+                    $invocationResult = $commandOutput | ConvertFrom-Json
+                    Write-Host "SSM command status: $($invocationResult.Status)"
+                    Write-Host "SSM command stdout:"
+                    Write-Host $invocationResult.StandardOutputContent
+                    
+                    if ($invocationResult.StandardErrorContent) {
+                        Write-Host "SSM command stderr:"
+                        Write-Host $invocationResult.StandardErrorContent
+                    }
+                    
+                    # You can now parse the StandardOutputContent for version information
+                    $versionOutput = $invocationResult.StandardOutputContent
+                    
+                } catch {
+                    Write-Host "Failed to parse command invocation response: $_"
+                    Write-Host "Raw invocation response: $commandOutput"
+                    throw "Could not parse SSM command invocation response"
                 }
 
             } catch {
                 Write-Host "=== SSM Command Execution Error ==="
                 Write-Host "Error Type: $($_.Exception.GetType().FullName)"
                 Write-Host "Error Message: $($_.Exception.Message)"
-                Write-Host "Error Line: $($_.InvocationInfo.ScriptLineNumber)"
-                Write-Host "Error Position: $($_.InvocationInfo.PositionMessage)"
-                
-                # Additional AWS CLI debugging
-                Write-Host "=== AWS CLI Debugging ==="
-                $awsIdentity = aws sts get-caller-identity --output text 2>&1
-                Write-Host "Current AWS identity: $awsIdentity"
-                
-                $ssmAccess = aws ssm describe-instance-information --max-results 1 --region $resourceRegion --output text 2>&1
-                Write-Host "SSM access test: $ssmAccess"
                 
                 throw "Failed to send command via SSM: $_"
             }

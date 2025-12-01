@@ -187,8 +187,10 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
             $commandsJson = @(
                 "export AWS_ACCESS_KEY_ID=$envAwsKeyId",
                 "export AWS_SECRET_ACCESS_KEY=$envAwsSecretAccessKey", 
-                "aws eks update-kubeconfig --name $resourceName --region $resourceRegion",
-                "kubectl config set-context --current --namespace $namespace",
+                "export AWS_DEFAULT_REGION=$resourceRegion",
+                "aws configure list"
+                "aws sts get-caller-identity"
+                "kubectl get pods -n $namespace",
                 "kubectl exec ds-cts-0 -n $namespace -c ds -- /opt/opendj/bin/status -V"
             ) | ConvertTo-Json
 

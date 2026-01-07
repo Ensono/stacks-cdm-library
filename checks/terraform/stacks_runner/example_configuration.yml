@@ -1,0 +1,8 @@
+stacks/stacks-tf-version:
+  runbook: 'http://www.ensono.com'
+  versionThreshold: 2 # TODO
+  repositories:
+    - repo_url: 'https://SomeProject@dev.azure.com/Org/Project/_git/repo-name-1'
+      taskctlContextPath: 'build/taskctl/context.yaml'
+    - repo_url: 'https://SomeProject@dev.azure.com/Org/Project/_git/repo-name-2'
+      taskctlContextPath: 'build/taskctl/context.yaml'

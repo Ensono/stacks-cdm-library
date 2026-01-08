@@ -1,4 +1,4 @@
-stacks/stacks-tf-version:
+stacks_runner/tf_version:
   runbook: 'http://www.ensono.com'
   versionThreshold: 2 # TODO
   repositories:

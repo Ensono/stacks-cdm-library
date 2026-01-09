@@ -14,6 +14,16 @@ $functions = (
    "Install-PowerShellModules.ps1" 
 )
 
+# Debug current working directory
+Write-Host "Current working directory:"
+Write-Host (Get-Location)
+
+Write-Host "Directory contents:"
+ls -lR
+
+Write-Host "CDM_LIBRARY_DIRECTORY env var:"
+Write-Host $env:CDM_LIBRARY_DIRECTORY
+
 foreach ($function in $functions) {
     . ("{0}/powershell/functions/{1}" -f $env:CDM_LIBRARY_DIRECTORY, $function)
 }

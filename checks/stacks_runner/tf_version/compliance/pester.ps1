@@ -31,8 +31,9 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
     Context "Repo: <_.repo_name>" -ForEach $repositories {
 
         BeforeAll {
-            ls
-            taskctlContextYaml = Get-Content -Raw -Path "$gitReposDir/$repositories.repoName/$repositories.taskctlContextPath" | ConvertFrom-Yaml
+            $repoName = $_.repoName
+            $taskctlContextPath = $_.taskctlContextPath
+            $taskctlContextYaml = Get-Content -Raw -Path "$gitReposDir/$repoName/$taskctlContextPath" | ConvertFrom-Yaml
             $taskctlRunnerImage = $taskctlContextYaml.contexts.powershell.container.name
             Write-Host ("taskctl runner image '<{0}>'" -f $taskctlRunnerImage)
         }

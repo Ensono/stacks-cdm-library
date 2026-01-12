@@ -25,55 +25,39 @@ BeforeDiscovery {
 
     Write-Host "Repositories:"
     Write-Host ($repositories | Out-String)
+
+#    Write-Host (Test-Path /home/vsts/work/1/s)
+#    Get-ChildItem -Path /home/vsts/work/1/s/ -Recurse | Out-String | Write-Host
 } 
 
 Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
 
     Context "Repo: <_.repo_name>" -ForEach $repositories {
 
-        BeforeAll {
+        BeforeEach {
+            $gitReposDir = $env:GIT_REPOS_DIR
             $repoName = $_.repoName
+            $versionConstraint = $_.requiredVersionConstraint
             $taskctlContextPath = $_.taskctlContextPath
             $taskctlContextYaml = Get-Content -Raw -Path "$gitReposDir/$repoName/$taskctlContextPath" | ConvertFrom-Yaml
             $taskctlRunnerImage = $taskctlContextYaml.contexts.powershell.container.name
-            Write-Host ("taskctl runner image '<{0}>'" -f $taskctlRunnerImage)
+            Write-Host "taskctl runner image: $taskctlRunnerImage"
+
+            docker pull $taskctlRunnerImage | Out-String | Write-Host
+
+            @"
+            terraform {
+                # https://developer.hashicorp.com/terraform/language/expressions/version-constraints
+                required_version = "$versionConstraint"
+            }
+"@ | Set-Content -Path "./version.tf" -Force
+
+            Get-Content -Path ./version.tf | Write-Host
         }
 
-        It "Sample Test" {
-            Write-Host ("TODO")
+        It "Terraform init should finish successfully for the given version constraint" {
+            docker run --rm -v ./version.tf:/version.tf $taskctlRunnerImage terraform init | Out-String | Write-Host
+            $LASTEXITCODE | Should -Be 0
         }
-
-
-        # docker pull <taskctl_runner_image>
-        # docker run taskctl_runner -- bash -c "terraform init"
-        # version contraint check after getting terraform init version
-
-#
-#        BeforeEach {
-#            @"
-#            terraform {
-#                # https://developer.hashicorp.com/terraform/language/expressions/version-constraints
-#                required_version = "$_"
-#            }
-#"@ | Set-Content -Path $testFilePath -Force
-#        }
-#
-#        It "'terraform init' should return an Exit Code of 0" {
-#            terraform init
-#            $LASTEXITCODE | Should -Be 0
-#        }
-#
-#        AfterEach {
-#            Remove-Item -Path $testFilePath -Force
-#        }
-#
-#        AfterAll {
-#            Clear-Variable -Name testFilePath
-#        }
-#    }
-
-#    AfterAll {
-#        Write-Information -MessageData ("`nInstalled Terraform version: {0}" -f $(terraform --version))
-#        Write-Information -MessageData ("`nRunbook: {0}`n" -f $_.runbook)
     }
 }

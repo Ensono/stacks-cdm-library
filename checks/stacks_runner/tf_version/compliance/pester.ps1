@@ -17,6 +17,7 @@ BeforeDiscovery {
     # building the discovery objects
     $discovery = $checkConfiguration
     $repositories = $discovery.repositories
+    $gitReposDir = $env:GIT_REPOS_DIR
 
     Write-Host "Discovery:"
     Write-Host ($discovery | Out-String)
@@ -31,9 +32,9 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
 
         BeforeAll {
             ls
-#            taskctlContextYaml = Get-Content -Raw -Path "$repositories.taskctlContextPath" | ConvertFrom-Yaml
-#            $taskctlRunnerImage = $taskctlContextYaml.contexts.powershell.container.name
-#            Write-Host ("taskctl runner image '<{0}>'" -f $taskctlRunnerImage)
+            taskctlContextYaml = Get-Content -Raw -Path "$gitReposDir/$repositories.repoName/$repositories.taskctlContextPath" | ConvertFrom-Yaml
+            $taskctlRunnerImage = $taskctlContextYaml.contexts.powershell.container.name
+            Write-Host ("taskctl runner image '<{0}>'" -f $taskctlRunnerImage)
         }
 
         It "Sample Test" {

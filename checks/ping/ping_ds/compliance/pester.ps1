@@ -58,6 +58,36 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
 
         BeforeAll {
 
+            try {
+                # First test with AWS CLI version to ensure it's working
+                $awsVersion = & aws --version 2>&1
+                Write-Host "AWS CLI Version: $awsVersion"
+
+                # Test authentication
+                $authTest = & aws sts get-caller-identity --output json 2>&1
+                if ($LASTEXITCODE -ne 0) {
+                    Write-Host "Raw AWS CLI Error Output:"
+                    $authTest | ForEach-Object { Write-Host $_ }
+                    
+                    # Try alternative authentication method
+                    Write-Host "Trying alternative authentication..."
+                    $authTest2 = & aws sts get-caller-identity --no-cli-pager 2>&1
+                    if ($LASTEXITCODE -ne 0) {
+                        throw "AWS authentication failed with exit code $LASTEXITCODE"
+                    } else {
+                        $authTest = $authTest2
+                    }
+                }
+
+                $authResult = $authTest | ConvertFrom-Json
+                Write-Host "AWS authentication successful. Account: $($authResult.Account), User: $($authResult.Arn)"
+            } catch {
+                Write-Host "Exception during AWS authentication: $($_.Exception.Message)"
+                Write-Host "Final credential lengths - AccessKey: $($cleanAwsAccessKeyId.Length), SecretKey: $($cleanAwsSecretAccessKey.Length)"
+
+                throw "AWS authentication failed: $_"
+            }
+
             $namespace = $_.namespace
             Write-Host "`nDEBUG`nChecking Ping Directory Server version in namespace: $namespace" # DEBUG
             Write-Host "Latest Ping Directory Server version to compare against: $latestVersion`n" # DEBUG
@@ -84,10 +114,8 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
 
             # Compare versions
             if ($upToDatePatchVersions -contains $version) {
-                Write-Host "`nINFO: The Ping Directory Server version is up to date. Current version: $version. Latest version: $latestVersion." -ForegroundColor Green
                 $needsUpgrade = $false
             } else {
-                Write-Host "`nERROR: The Ping Directory Server is out of date. Current version: $version. Latest version: $latestVersion." -ForegroundColor Red
                 $needsUpgrade = $true
             }
         }

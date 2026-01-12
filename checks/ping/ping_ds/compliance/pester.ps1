@@ -159,7 +159,7 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
             Clear-Variable -Name "minorVersion"
             Clear-Variable -Name "patchVersion"
             Clear-Variable -Name "upToDatePatchVersions"
-            Clear-Variable -Name "needsUpgrade"
+            Clear-Variable -Name "inUpdateRange"
         } 
     }
 

@@ -128,23 +128,23 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
 
             # Compare versions
             if ($upToDatePatchVersions -contains $version) {
-                $needsUpgrade = $false
+                $inUpdateRange = $true
             } else {
-                $needsUpgrade = $true
+                $inUpdateRange = $false
             }
         }
 
         # Set test criteria
-        It "PingDS is outside the target version threshold" {
-            $needsUpgrade | Should -Be $false
+        It "Testing that PingDS is in the target version range" {
+            $inUpdateRange | Should -Be $true
         }
 
         AfterAll {
             Write-Host "Up-to-date versions: $($upToDatePatchVersions -join ', ') `n`n`e[3mPlease keep the latest versions file in CDM Library updated, for accurate results.`e[0m"
 
-            if ($needsUpgrade -eq $false) {
+            if ($inUpdateRange -eq $true) {
                 Write-Host "`nINFO: The Ping Directory Server version is up to date. Current version: $version. Latest version: $latestVersion.`n" -ForegroundColor Green
-            } elseif ($needsUpgrade -eq $true) {
+            } elseif ($inUpdateRange -eq $false) {
                 Write-Host "`nWARNING: The Ping Directory Server is out of date. Current version: $version. Latest version: $latestVersion.`n" -ForegroundColor Yellow
             } else {
                 Write-Host "`nERROR: Unable to determine if Ping Directory Server needs upgrade. Current version: $version. Latest version: $latestVersion.`n" -ForegroundColor Red

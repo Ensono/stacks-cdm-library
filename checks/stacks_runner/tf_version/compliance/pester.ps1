@@ -19,6 +19,7 @@ BeforeDiscovery {
     $repositories = $discovery.repositories
     $gitReposDir = $env:GIT_REPOS_DIR
 
+    Write-Host "Git repos dir env var: $gitReposDir"
     Write-Host "Discovery:"
     Write-Host ($discovery | Out-String)
 

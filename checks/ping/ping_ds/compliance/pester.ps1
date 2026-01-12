@@ -88,9 +88,23 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
                 throw "AWS authentication failed: $_"
             }
 
+            $resourceName = $_.resourceName
+            $resourceRegion = $_.resourceRegion
             $namespace = $_.namespace
             Write-Host "`nDEBUG`nChecking Ping Directory Server version in namespace: $namespace" # DEBUG
+            Write-Host "Cluster Name: $resourceName" # DEBUG
+            Write-Host "Resource Region: $resourceRegion" # DEBUG
             Write-Host "Latest Ping Directory Server version to compare against: $latestVersion`n" # DEBUG
+
+            # Update kubeconfig for EKS cluster
+            $updateKubeconfig = & aws eks update-kubeconfig --name $resourceName --region $resourceRegion 2>&1
+            if ($LASTEXITCODE -ne 0) {
+                Write-Host "Error updating kubeconfig:"
+                $updateKubeconfig | ForEach-Object { Write-Host $_ }
+                throw "Failed to update kubeconfig for EKS cluster $resourceName in region $resourceRegion"
+            } else {
+                Write-Host "Kubeconfig updated successfully for cluster $resourceName in region $resourceRegion"
+            }
 
             # Run command on the target instance
             $version = & kubectl exec -it ds-cts-0 -n $namespace -c ds -- /opt/opendj/bin/status -V | head -n 1 | awk '{print $4}' | sed 's/-.*//' 2>&1

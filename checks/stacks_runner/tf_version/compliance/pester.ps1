@@ -19,15 +19,11 @@ BeforeDiscovery {
     $repositories = $discovery.repositories
     $gitReposDir = $env:GIT_REPOS_DIR
 
-    Write-Host "Git repos dir env var: $gitReposDir"
     Write-Host "Discovery:"
     Write-Host ($discovery | Out-String)
 
     Write-Host "Repositories:"
     Write-Host ($repositories | Out-String)
-
-#    Write-Host (Test-Path /home/vsts/work/1/s)
-#    Get-ChildItem -Path /home/vsts/work/1/s/ -Recurse | Out-String | Write-Host
 } 
 
 Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
@@ -56,6 +52,7 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
         }
 
         It "Terraform init should finish successfully for the given version constraint" {
+            Write-Host "Running test for repo: $repoName with version constraint: $versionConstraint"
             docker run --rm -v ./version.tf:/version.tf $taskctlRunnerImage terraform init | Out-String | Write-Host
             $LASTEXITCODE | Should -Be 0
         }

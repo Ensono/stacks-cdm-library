@@ -18,12 +18,6 @@ BeforeDiscovery {
     $discovery = $checkConfiguration
     $repositories = $discovery.repositories
     $gitReposDir = $env:GIT_REPOS_DIR
-
-    Write-Host "Discovery:"
-    Write-Host ($discovery | Out-String)
-
-    Write-Host "Repositories:"
-    Write-Host ($repositories | Out-String)
 } 
 
 Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
@@ -37,9 +31,9 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
             $taskctlContextPath = $_.taskctlContextPath
             $taskctlContextYaml = Get-Content -Raw -Path "$gitReposDir/$repoName/$taskctlContextPath" | ConvertFrom-Yaml
             $taskctlRunnerImage = $taskctlContextYaml.contexts.powershell.container.name
-            Write-Host "taskctl runner image: $taskctlRunnerImage"
 
-            docker pull $taskctlRunnerImage | Out-String | Write-Host
+            Write-Host "Pulling runner image: $taskctlRunnerImage"
+            docker pull $taskctlRunnerImage
 
             @"
             terraform {
@@ -47,8 +41,6 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
                 required_version = "$versionConstraint"
             }
 "@ | Set-Content -Path "./version.tf" -Force
-
-            Get-Content -Path ./version.tf | Write-Host
         }
 
         It "Terraform init should finish successfully for the given version constraint" {

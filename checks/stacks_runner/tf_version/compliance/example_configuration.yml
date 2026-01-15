@@ -1,8 +1,18 @@
 stacks_runner/tf_version:
   runbook: 'http://www.ensono.com'
-  versionThreshold: 2 # TODO
+
+  # Repositories must be first cloned in the pipeline prior to running the check
+  # Set GIT_REPOS_DIR environment variable to reference the path containing cloned IaC directories
   repositories:
-    - repo_url: 'https://SomeProject@dev.azure.com/Org/Project/_git/repo-name-1'
-      taskctlContextPath: 'build/taskctl/context.yaml'
-    - repo_url: 'https://SomeProject@dev.azure.com/Org/Project/_git/repo-name-2'
-      taskctlContextPath: 'build/taskctl/context.yaml'
+    - repoName: iac
+      taskctlContextPath: 'build/taskctl/contexts.yaml'
+      requiredVersionConstraint: '~> 1.10'
+    - repoName: iac-security
+      taskctlContextPath: 'build/taskctl/contexts.yaml'
+      requiredVersionConstraint: '~> 1.10'
+    - repoName: iac-shared
+      taskctlContextPath: 'build/taskctl/contexts.yaml'
+      requiredVersionConstraint: '~> 1.10'
+    - repoName: iac-monitoring
+      taskctlContextPath: 'build/taskctl/contexts.yaml'
+      requiredVersionConstraint: '~> 1.10'

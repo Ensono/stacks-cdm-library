@@ -42,6 +42,9 @@
     $parameters.Add('uri', ("{0}/_apis/{1}?{2}" -f $baseURL, [URI]::EscapeUriString(("wit/workitems/`${0}" -f $wiType)), $queryParameters))
 
     $parameters.Add('body', $($payload | ConvertTo-Json))
+
+    Write-Host "Parameters:"
+    Write-Host ($parameters | Out-String)
     
     $response = Invoke-RestMethod @parameters | Write-Output
 

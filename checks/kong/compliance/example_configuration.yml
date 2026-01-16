@@ -1,12 +1,8 @@
-kong/kong_dataplane_version:
-  runbook: 'http://www.ensono.com'
-  versionThreshold: 2
+kong/version:
+  runbook: "https://ensono.com"
   stages:
-    - name: 'nonprod'
+    - name: "dev_industrytest"
       targets:
-        - resourceName: '[RESOURCE NAME]'
-          resourceRegion: '[RESOURCE REGION]'
-    - name: 'prod'
-      targets:
-        - resourceName: '[RESOURCE NAME]'
-          resourceRegion: '[RESOURCE REGION]'
+        - resourceName: '<cluster-name>'
+          resourceRegion: '<cluster-region>'
+          namespace: "<kong-namespace>"

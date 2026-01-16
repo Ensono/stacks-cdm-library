@@ -14,6 +14,10 @@ BeforeDiscovery {
     # to avoid a potential clash with the YamlDotNet libary always load the module 'powershell-yaml' last
     Install-PowerShellModules -moduleNames ("powershell-yaml")
 
+    # install kubectl
+    $kubectlInstallOutput = Invoke-Expression "sudo apt-get update && sudo apt-get install -y kubectl" 2>&1
+    Write-Host "Kubectl install output: $kubectlInstallOutput"
+
     # configuration
     $configurationFile = $parentConfiguration.configurationFile
     $stageName = $parentConfiguration.stageName
@@ -35,57 +39,20 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
         $versionThreshold = $_.versionThreshold
     }
 
-    Context "Target: <_.resourceRegion>/<_.resourceName>" -ForEach $targets {
+    Context "Target: <_.namespace>/<_.resourceRegion>/<_.resourceName>" -ForEach $targets {
         BeforeAll {
-            $resourceName = $_.resourceName
-            $resourceRegion = $_.resourceRegion
-    
-            try {
-                $resource = Get-EKSCluster -Name $resourceName -Region $resourceRegion
-            }
-            catch {
-                throw ("Cannot find resource: '{0}' in region: '{1}'" -f $resourceName, $resourceRegion)
-            }
-
-            $currentVersion = $resource.Version
-            $targetVersions = (Get-EKSAddonVersion -AddonName 'vpc-cni' -Region $resourceRegion).AddonVersions.Compatibilities.ClusterVersion |
-                Sort-Object {$_ -as [version]} -Unique -Descending |
-                    Select-Object -First $versionThreshold 
-        }
-
-        It "Should have a Status of ACTIVE" {
-            $resource.Status | Should -Be "ACTIVE"
-        }
-
-        It "The current version should be within target versions" {   
-            $targetVersions -contains $currentVersion | Should -Be $true
-        }
-
-        AfterAll {
-            Write-Information -MessageData ("`nCurrent version {0}" -f $currentVersion)
-
-            Write-Information -MessageData("`nTarget versions (n-{0}) for {1}" -f $versionThreshold, $resourceRegion)
-            foreach ($version in $targetVersions) {
-                Write-Information -MessageData $version
+            # Update kubeconfig for EKS cluster
+            $updateKubeconfig = & aws eks update-kubeconfig --name $resourceName --region $resourceRegion 2>&1
+            if ($LASTEXITCODE -ne 0)
+            {
+                Write-Host "Error updating kubeconfig:"
+                $updateKubeconfig | ForEach-Object { Write-Host $_ }
+                throw "Failed to update kubeconfig for EKS cluster $resourceName in region $resourceRegion"
             }
 
-            Write-Information -MessageData ""
-
-            Clear-Variable -Name "resourceName"
-            Clear-Variable -Name "resourceRegion"
-            Clear-Variable -Name "resource"
-            Clear-Variable -Name "currentVersion"
-            Clear-Variable -Name "targetVersions"
+            $kong_pod = kubectl get pods -n kong-dev --no-headers -o custom-columns=":metadata.name" | Select-Object -First 1
+            $version = & kubectl exec -it $kong_pod -n $namespace -c proxy -- kong version
+            Write-Host("Kong dataplane version: $version")
         }
     }
-
-    AfterAll {
-        Write-Information -MessageData ("`nRunbook: {0}`n" -f $_.runbook)
-
-        Clear-Variable -Name "versionThreshold"
-    }
-}
-
-AfterAll {
-    Clear-AWSCredential
 }

@@ -14,6 +14,16 @@ BeforeDiscovery {
     # to avoid a potential clash with the YamlDotNet libary always load the module 'powershell-yaml' last
     Install-PowerShellModules -moduleNames ("powershell-yaml")
 
+    # install AWS CLI
+    try {
+        $awsCliCheck = & aws --version 2>&1
+        Write-Host "AWS CLI already installed: $awsCliCheck"
+    } catch {
+        Write-Host "Installing AWS CLI..."
+        $awsCliInstallOutput = Invoke-Expression "curl 'https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip' -o 'awscliv2.zip' && unzip awscliv2.zip && sudo ./aws/install" 2>&1
+        Write-Host "AWS CLI install output: $awsCliInstallOutput"
+    }
+
     # install kubectl
     $kubectlInstallOutput = Invoke-Expression "sudo apt-get update && sudo apt-get install -y kubectl" 2>&1
     Write-Host "Kubectl install output: $kubectlInstallOutput"

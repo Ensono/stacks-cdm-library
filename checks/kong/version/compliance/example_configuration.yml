@@ -1,0 +1,17 @@
+# Define versionConstraint according to semver syntax:
+# https://learn.microsoft.com/en-us/nuget/concepts/package-versioning?tabs=semver20sort#version-ranges
+kong/version:
+  runbook: "https://ensono.com"
+  stages:
+    - name: "dev"
+      targets:
+        - resourceName: '<cluster-name>'
+          resourceRegion: '<cluster-region>'
+          namespace: "<kong-namespace>"
+          versionConstraint: "[1.0,)"
+    - name: "prod"
+      targets:
+        - resourceName: '<cluster-name>'
+          resourceRegion: '<cluster-region>'
+          namespace: "<kong-namespace>"
+          versionConstraint: "[1.0,)"

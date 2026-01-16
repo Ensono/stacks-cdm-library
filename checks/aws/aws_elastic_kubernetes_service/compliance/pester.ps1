@@ -26,7 +26,7 @@ BeforeDiscovery {
 
 BeforeAll {
     # AWS authentication (This is only necessary if authentication has not been hadled by the pipeline)
-    # Set-AWSCredential -AccessKey $parentConfiguration.awsAccessKeyId -SecretKey $parentConfiguration.awsSecretAccessKey 
+    # Set-AWSCredential -AccessKey $parentConfiguration.awsAccessKeyId -SecretKey $parentConfiguration.awsSecretAccessKey
 }
 
 Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
@@ -39,7 +39,7 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
         BeforeAll {
             $resourceName = $_.resourceName
             $resourceRegion = $_.resourceRegion
-    
+
             try {
                 $resource = Get-EKSCluster -Name $resourceName -Region $resourceRegion
             }
@@ -50,14 +50,14 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
             $currentVersion = $resource.Version
             $targetVersions = (Get-EKSAddonVersion -AddonName 'vpc-cni' -Region $resourceRegion).AddonVersions.Compatibilities.ClusterVersion |
                 Sort-Object {$_ -as [version]} -Unique -Descending |
-                    Select-Object -First $versionThreshold 
+                    Select-Object -First $versionThreshold
         }
 
         It "Should have a Status of ACTIVE" {
             $resource.Status | Should -Be "ACTIVE"
         }
 
-        It "The current version should be within target versions" {   
+        It "The current version should be within target versions" {
             $targetVersions -contains $currentVersion | Should -Be $true
         }
 

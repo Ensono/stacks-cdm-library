@@ -17,21 +17,33 @@ The CDM Library supports Pester variants enabling flexibility when invoking Pest
 ```
 ├───checks
 │   ├───aws
-│   │   └───aws_elastic_kubernetes_service
-│   │       └───sre
+│   │   ├───aws_elastic_kubernetes_service
+│   │   │   └───compliance
+│   │   ├───aws_kms_keystore_pem
+│   │   │   └───compliance
+│   │   └── aws_sm_cert
+│   │       └── compliance
 │   ├───azure
 │   │   ├───azure_application_gateway
-│   │   │   └───sre
+│   │   │   └───compliance
 │   │   ├───azure_devops
-│   │   │   └───sre
+│   │   │   └───compliance
 │   │   └───azure_kubernetes_service
-│   │       └───sre
+│   │       └───compliance
 │   ├───digicert
-│   │   └───sre
+│   │   └───compliance
+│   ├── gcp
+│   │   ├── bigquery_jobs
+│   │   │   └── compliance
+│   │   └── google_cloud_composer
+│   │       └── compliance
 │   ├───github
-│   │   └───sre
+│   │   └───compliance
+│   ├───ping
+│   │   ├───ping_ds
+│   │   │   └───compliance
 │   └───terraform
-│       └───sre
+│       └───compliance
 ├───integrations
 │   └───ado
 │       └───ensonodigitaluk

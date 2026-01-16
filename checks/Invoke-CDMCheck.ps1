@@ -31,6 +31,12 @@ $script:checkDirectory = ("{0}/{1}" -f $env:CDM_CHECKS_DIRECTORY, $env:CHECK_NAM
 # check file
 $script:checkFile = ("{0}/{1}" -f $checkDirectory, "check.ps1")
 
+# aws authentication environment variables
+$script:awsAccessKeyId = $env:AWS_ACCESS_KEY_ID
+$script:awsSecretAccessKey = $env:AWS_SECRET_ACCESS_KEY
+$script:envAwsKeyId = $env:ENV_AWS_KEY_ID
+$script:envAwsSecretAccessKey = $env:ENV_AWS_SECRET_ACCESS_KEY
+
 # configuration file
 if ([string]::IsNullOrEmpty($env:CONFIGURATION_VARIANT_NAME)) {
     $script:configurationFile = ("{0}/{1}" -f $checkDirectory , "configuration.yml")
@@ -64,6 +70,10 @@ if ($skipUntilDateTime -gt $dateTime) {
         checkDisplayName = $env:CHECK_DISPLAY_NAME
         checkName = $env:CHECK_NAME
         checkVariantName = $env:CHECK_VARIANT_NAME
+        awsAccessKeyId = $awsAccessKeyId
+        awsSecretAccessKey = $awsSecretAccessKey
+        envAwsKeyId = $envAwsKeyId
+        envAwsSecretAccessKey = $envAwsSecretAccessKey
         configurationFile = $configurationFile
     }
 

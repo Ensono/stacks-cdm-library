@@ -135,27 +135,36 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
             $version = $imageLine.ToString().Split(':')[-1].Trim()
             Write-Host "`nCurrent Datadog Cluster Agent version: $version"
 
-            $numberOfPatchVersionsToBeConsideredUpToDate = 3
-
-            # Create array of up-to-date versions
+            # Parse both versions for comparison
             $latestVersionParts = $latestVersion -split '\.'
-            $majorVersion = [int]$latestVersionParts[0]
-            $minorVersion = [int]$latestVersionParts[1] 
-            $patchVersion = [int]$latestVersionParts[2]
+            $latestMajor = [int]$latestVersionParts[0]
+            $latestMinor = [int]$latestVersionParts[1] 
+            $latestPatch = [int]$latestVersionParts[2]
 
-            $upToDatePatchVersions = @()
-            for ($i = 0; $i -lt $numberOfPatchVersionsToBeConsideredUpToDate; $i++) {
-                $currentPatch = $patchVersion - $i
-                if ($currentPatch -ge 0) {
-                    $upToDatePatchVersions += "$majorVersion.$minorVersion.$currentPatch"
+            $currentVersionParts = $version -split '\.'
+            $currentMajor = [int]$currentVersionParts[0]
+            $currentMinor = [int]$currentVersionParts[1] 
+            $currentPatch = [int]$currentVersionParts[2]
+
+            # Allow versions within the last 3 minor versions
+            $numberOfMinorVersionsToBeConsideredUpToDate = 3
+            
+            $upToDateVersions = @()
+            for ($i = 0; $i -lt $numberOfMinorVersionsToBeConsideredUpToDate; $i++) {
+                $minorToCheck = $latestMinor - $i
+                if ($minorToCheck -ge 0) {
+                    # For each minor version, accept any patch version
+                    $upToDateVersions += "$latestMajor.$minorToCheck.*"
                 }
             }
 
-            # Compare versions
-            if ($upToDatePatchVersions -contains $version) {
-                $inUpdateRange = $true
-            } else {
-                $inUpdateRange = $false
+            # Compare versions - check if current version is within acceptable range
+            $inUpdateRange = $false
+            if ($currentMajor -eq $latestMajor) {
+                $minorDifference = $latestMinor - $currentMinor
+                if ($minorDifference -ge 0 -and $minorDifference -lt $numberOfMinorVersionsToBeConsideredUpToDate) {
+                    $inUpdateRange = $true
+                }
             }
         }
 
@@ -165,12 +174,12 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
         }
 
         AfterAll {
-            Write-Host "Up-to-date versions: $($upToDatePatchVersions -join ', ')"
+            Write-Host "Up-to-date version range: $($upToDateVersions -join ', ')"
 
             if ($inUpdateRange -eq $true) {
                 Write-Host "`nINFO: The Datadog Cluster Agent version is up to date. Current version: $version. Latest version: $latestVersion.`n" -ForegroundColor Green
             } elseif ($inUpdateRange -eq $false) {
-                Write-Host "`nWARNING: The Datadog Cluster Agent is out of date. Current version: $version. Latest version: $latestVersion.`n" -ForegroundColor Yellow
+                Write-Host "`nWARNING: The Datadog Cluster Agent is out of date. Current version: $version. Latest version: $latestVersion. Acceptable range: within last $numberOfMinorVersionsToBeConsideredUpToDate minor versions.`n" -ForegroundColor Yellow
             } else {
                 Write-Host "`nERROR: Unable to determine if Datadog Cluster Agent needs upgrade. Current version: $version. Latest version: $latestVersion.`n" -ForegroundColor Red
             }
@@ -179,13 +188,18 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
             Clear-Variable -Name "deploymentName"
             Clear-Variable -Name "version"
             Clear-Variable -Name "latestVersion"
-            Clear-Variable -Name "numberOfPatchVersionsToBeConsideredUpToDate"
+            Clear-Variable -Name "numberOfMinorVersionsToBeConsideredUpToDate"
             Clear-Variable -Name "latestVersionParts"
-            Clear-Variable -Name "majorVersion"
-            Clear-Variable -Name "minorVersion"
-            Clear-Variable -Name "patchVersion"
-            Clear-Variable -Name "upToDatePatchVersions"
+            Clear-Variable -Name "latestMajor"
+            Clear-Variable -Name "latestMinor"
+            Clear-Variable -Name "latestPatch"
+            Clear-Variable -Name "currentVersionParts"
+            Clear-Variable -Name "currentMajor"
+            Clear-Variable -Name "currentMinor"
+            Clear-Variable -Name "currentPatch"
+            Clear-Variable -Name "upToDateVersions"
             Clear-Variable -Name "inUpdateRange"
+            Clear-Variable -Name "minorDifference"
         } 
     }
 

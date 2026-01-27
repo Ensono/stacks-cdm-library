@@ -161,13 +161,13 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
             Write-Host ""
             Write-Host "=== RESULT ==="
 
-            # Allow versions within the last 3 minor versions
-            $numberOfMinorVersionsToBeConsideredUpToDate = 3
+            # Allow versions within the last 10 minor versions
+            $numberOfMinorVersionsToBeConsideredUpToDate = 10
             
             # Compare versions - check if current version is within acceptable range
             $inUpdateRange = $false
             if ($majorVersionsBehind -eq 0) {
-                if ($minorVersionsBehind -ge 0 -and $minorVersionsBehind -lt $numberOfMinorVersionsToBeConsideredUpToDate) {
+                if ($minorVersionsBehind -ge 0 -and $minorVersionsBehind -le $numberOfMinorVersionsToBeConsideredUpToDate) {
                     $inUpdateRange = $true
                     Write-Host "Minor version is $minorVersionsBehind version(s) behind"
                     Write-Host "Status: UPDATED" -ForegroundColor Green

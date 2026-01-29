@@ -1,0 +1,17 @@
+# Define versionConstraint according to semver syntax:
+# https://learn.microsoft.com/en-us/nuget/concepts/package-versioning?tabs=semver20sort#version-ranges
+ping/ping_idm:
+  runbook: 'http://www.ensono.com'
+  stages:
+    - name: 'dev'
+      targets:
+      - versionEndpoint: 'https://{{dev1-host}}/openidm/info/version'
+        versionConstraint: "[8.0,)"
+      - versionEndpoint: 'https://{{dev2-host}}/openidm/info/version'
+        versionConstraint: "[8.0,)"
+    - name: 'prod'
+      targets:
+      - versionEndpoint: 'https://{{prd1-host}}/openidm/info/version'
+        versionConstraint: "[8.0,)"
+      - versionEndpoint: 'https://{{prd2-host}}/openidm/info/version'
+        versionConstraint: "[8.0,)"

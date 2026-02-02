@@ -4,16 +4,6 @@ param (
 )
 
 BeforeDiscovery {
-    # installing dependencies
-    Install-PowerShellModules -moduleNames ("AWS.Tools.Installer")
-    
-    Install-AWSToolsModule AWS.Tools.Common, AWS.Tools.EKS -Force
-    Import-Module -Name "AWS.Tools.Common" -Force
-    Import-Module -Name "AWS.Tools.EKS" -Force
-
-    # to avoid a potential clash with the YamlDotNet libary always load the module 'powershell-yaml' last
-    Install-PowerShellModules -moduleNames ("powershell-yaml")
-
     # install AWS CLI
     try {
         $awsCliCheck = & aws --version 2>&1

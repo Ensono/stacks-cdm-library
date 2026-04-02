@@ -6,3 +6,4 @@ github:
   dependabot:
     PRStaleInDays: 10
     PRMaxCount: 3
+    MinSeverity: 'high'

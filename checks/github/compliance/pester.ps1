@@ -20,10 +20,31 @@ BeforeDiscovery {
     # building the discovery objects
     $repositories = [System.Collections.ArrayList]@()
 
+    # filter open dependabot PRs based on minimum severity
+    $severityRank = @{
+        low = 1
+        moderate = 2
+        high = 3
+        critical = 4
+    }
+
+    $minSeverity = [string]$checkConfiguration.dependabot.MinSeverity
+    if ([string]::IsNullOrWhiteSpace($minSeverity)) {
+        $normalizedMinSeverity = "low"
+    } else {
+        $normalizedMinSeverity = $minSeverity.ToLowerInvariant()
+    }
+
+    if (-not $severityRank.ContainsKey($normalizedMinSeverity)) {
+        throw "Unsupported dependabot.MinSeverity '$minSeverity'. Supported values: low, moderate, high, critical."
+    }
+
+    $minRank = $severityRank[$normalizedMinSeverity]
+
     foreach ($repositoryName in $checkConfiguration.repositories) {
         $dependabotPullRequests = Get-GitHubPullRequest -OwnerName $checkConfiguration.owner -RepositoryName $repositoryName |
-            Where-Object {$_.state -eq 'open' -and $_.user.login -eq 'dependabot[bot]'} |
-                Select-Object -Property title, created_at
+            Where-Object {$_.state -eq 'open' -and $_.user.login -eq 'dependabot[bot]' -and $_.title -match '(low|moderate|high|critical)' -and $severityRank[$Matches[1].ToLowerInvariant()] -ge $minRank} |
+            Select-Object -Property title, created_at
 
         $repositoryObject = [ordered] @{
             repositoryName = $repositoryName

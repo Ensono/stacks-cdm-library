@@ -1,17 +1,11 @@
-# Define versionConstraint according to semver syntax:
-# https://learn.microsoft.com/en-us/nuget/concepts/package-versioning?tabs=semver20sort#version-ranges
+# PingIDM version check compares the running version against the latest version
+# defined in the latest_versions file. The last 3 patch versions are considered up-to-date.
 ping/ping_idm:
   runbook: 'http://www.ensono.com'
   stages:
     - name: 'dev'
       targets:
-      - versionEndpoint: 'https://{{dev1-host}}/openidm/info/version'
-        versionConstraint: "[8.0,)"
-      - versionEndpoint: 'https://{{dev2-host}}/openidm/info/version'
-        versionConstraint: "[8.0,)"
+      - versionEndpoint: 'https://{{dev-host}}/openidm/info/version'
     - name: 'prod'
       targets:
-      - versionEndpoint: 'https://{{prd1-host}}/openidm/info/version'
-        versionConstraint: "[8.0,)"
-      - versionEndpoint: 'https://{{prd2-host}}/openidm/info/version'
-        versionConstraint: "[8.0,)"
+      - versionEndpoint: 'https://{{prod-host}}/openidm/info/version'

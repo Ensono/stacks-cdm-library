@@ -4,6 +4,9 @@ param (
 )
 
 BeforeDiscovery {
+    # installing dependencies
+    Install-PowerShellModules -moduleNames ("powershell-yaml")
+
     # install AWS CLI
     try {
         $awsCliCheck = & aws --version 2>&1

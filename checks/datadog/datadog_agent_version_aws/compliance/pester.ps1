@@ -209,5 +209,10 @@ Describe $parentConfiguration.checkDisplayName -ForEach $discovery {
 }
 
 AfterAll {
-    Clear-AWSCredential
+    # Clear-AWSCredential is provided by the AWS.Tools.Common PowerShell module,
+    # which is not installed on every agent (e.g. Microsoft-hosted ubuntu-22.04).
+    # Guard the call so missing module doesn't fail the check after tests pass.
+    if (Get-Command -Name Clear-AWSCredential -ErrorAction SilentlyContinue) {
+        Clear-AWSCredential
+    }
 }
